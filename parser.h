@@ -1,5 +1,6 @@
 #include "ScopeTableClass/SymbolTable.h"
 #include <fstream>
+#include <sstream>
 #include <algorithm>
 #include <vector>
 #include <stack>
@@ -121,4 +122,15 @@ void initAsmCode(){
     while (getline(ini_file, line)) {
         asmFile << line << "\n";
     }
+}
+
+void writeToAsm(std::string asmCode, std::string comment, bool indent){
+    asmFile << "\n    ;" << comment << std::endl;
+    std::string line;   
+    std::stringstream asmLines(asmCode); 
+    while (std::getline(asmLines, line, '\n')) {
+        asmFile <<  (indent ? "\t":"") << line << std::endl;
+    }
+
+    asmFile << std::endl;
 }

@@ -293,15 +293,27 @@ func_definition : type_specifier ID LPAREN parameter_list RPAREN
 
 
 	//asm code
-	asmFile << "\n	;function initialization" << std::endl;
-	if(currentFunction == "main") 
-		asmFile << "MAIN PROC\n\n\n" << "MOV AX, @" << "DATA\n" << "MOV DS, AX\n" << std::endl;
-	else{
-		currentAsmFunction = newFuncGenerator(currentFunction);
-		asmFile << currentAsmFunction << " PROC\n" << std::endl;
-	}
+	if(currentFunction == "main"){
+		std::string convertedCode = "MAIN PROC\n";
+		std::string comment = "main function initialization";
 
-	asmFile << "PUSH BP\n" << "MOV BP, SP" << std::endl;
+		writeToAsm(convertedCode, comment, false);
+
+		convertedCode = "MOV AX, @DATA\nMOV DS, AX\n";
+		comment = "data initialization";
+
+		writeToAsm(convertedCode, comment, true);
+	}else{
+		currentAsmFunction = newFuncGenerator(currentFunction);
+		std::string convertedCode = currentAsmFunction + " PROC\n";
+		std::string comment = currentFunction + " function initialization";
+
+		writeToAsm(convertedCode, comment, false);
+	}	
+	std::string convertedCode = "PUSH BP\nMOV BP, SP";
+	std::string comment = "function stack movement for recursive calling";
+	writeToAsm(convertedCode, comment, true);
+
 	currentOffset = 0;
 } 
 compound_statement 
@@ -313,7 +325,12 @@ compound_statement
 	yacclogfile << "Scope #" << symbolTable.getCurrentScopeID() << " Exited" << std::endl;
 	yacclogfile << symbolTable.printAllScopeTable() << std::endl << std::endl;
 	symbolTable.exitScope();
-	asmFile << "ADD SP, " + std::to_string(offsetStack.top()*2) + "\n";
+
+	//asm code
+	std::string comment = "removing all variable in the scope";
+	std::string convertedCode = "ADD SP, " + std::to_string(offsetStack.top()*2) + "\n";
+	writeToAsm(convertedCode, comment, true);
+
 	offsetStack.pop();
 	tabSpace--;
 
@@ -330,12 +347,23 @@ compound_statement
 	$$ = new SymbolInfo(codeText, "");
 
 	//asm code
-	asmFile << "\n	;function end" << std::endl;
-	asmFile << "POP BP" << std::endl;
-	if(currentFunction == "main") 
-		asmFile << "\nMOV AH,4CH\nINT 21h\nMAIN ENDP\n" << "END MAIN\n\n" << std::endl;
-	else 
-		asmFile << "\nRET\n" << currentAsmFunction << " EDNP\n\n" << std::endl;
+	convertedCode = "POP BP";
+	comment = "stack movement for recursive calling, [if return available then it is in DX]";
+	writeToAsm(convertedCode, comment, true);
+
+	if(currentFunction == "main") {
+		std::string convertedCode = "MOV AH,4CH\nINT 21h\n";
+		std::string comment = "interrupt to return to operator";
+		writeToAsm(convertedCode, comment, true);
+
+		convertedCode = "MAIN ENDP\nEND MAIN\n";
+		comment = "main function ending";
+		writeToAsm(convertedCode, comment, false);
+	}else{
+		std::string convertedCode = "RET\n" + currentAsmFunction + " EDNP\n";
+		std::string comment = currentFunction + " function ending";
+		writeToAsm(convertedCode, comment, false);
+	}
 }
 
 
@@ -403,15 +431,27 @@ compound_statement
 	//code logs are included in next part
 
 	//asm code
-	asmFile << "\n	;function initialization" << std::endl;
-	if(currentFunction == "main") 
-		asmFile << "MAIN PROC\n\n\n" << "MOV AX, @" << "DATA\n" << "MOV DS, AX\n" << std::endl;
-	else{
-		currentAsmFunction = newFuncGenerator(currentFunction);
-		asmFile << currentAsmFunction << " PROC\n" << std::endl;
-	}
+	if(currentFunction == "main"){
+		std::string convertedCode = "MAIN PROC\n";
+		std::string comment = "main function initialization";
 
-	asmFile << "PUSH BP\n" << "MOV BP, SP" << std::endl;
+		writeToAsm(convertedCode, comment, false);
+
+		convertedCode = "MOV AX, @DATA\nMOV DS, AX\n";
+		comment = "data initialization";
+
+		writeToAsm(convertedCode, comment, true);
+	}else{
+		currentAsmFunction = newFuncGenerator(currentFunction);
+		std::string convertedCode = currentAsmFunction + " PROC\n";
+		std::string comment = currentFunction + " function initialization";
+
+		writeToAsm(convertedCode, comment, false);
+	}	
+	std::string convertedCode = "PUSH BP\nMOV BP, SP";
+	std::string comment = "function stack movement for recursive calling";
+	writeToAsm(convertedCode, comment, true);
+
 	currentOffset = 0;
 } 
 compound_statement 
@@ -423,7 +463,12 @@ compound_statement
 	yacclogfile << "Scope #" << symbolTable.getCurrentScopeID() << " Exited" << std::endl;
 	yacclogfile << symbolTable.printAllScopeTable() << std::endl << std::endl;
 	symbolTable.exitScope();
-	asmFile << "ADD SP, " + std::to_string(offsetStack.top()*2) + "\n";
+
+	//asm code
+	std::string comment = "removing all variable in the scope";
+	std::string convertedCode = "ADD SP, " + std::to_string(offsetStack.top()*2) + "\n";
+	writeToAsm(convertedCode, comment, true);
+	
 	offsetStack.pop();
 	tabSpace--;
 
@@ -438,12 +483,23 @@ compound_statement
 	$$ = new SymbolInfo(codeText, "");
 
 	//asm code
-	asmFile << "\n	;function end" << std::endl;
-	asmFile << "POP BP" << std::endl;
-	if(currentFunction == "main") 
-		asmFile << "\nMOV AH,4CH\nINT 21h\nMAIN ENDP\n" << "END MAIN\n\n" << std::endl;
-	else 
-		asmFile << "\nRET\n" << currentAsmFunction << " EDNP\n\n" << std::endl;
+	convertedCode = "POP BP";
+	comment = "stack movement for recursive calling, [if return available then it is in DX]";
+	writeToAsm(convertedCode, comment, true);
+
+	if(currentFunction == "main") {
+		std::string convertedCode = "MOV AH,4CH\nINT 21h\n";
+		std::string comment = "interrupt to return to operator";
+		writeToAsm(convertedCode, comment, true);
+
+		convertedCode = "MAIN ENDP\nEND MAIN\n";
+		comment = "main function ending";
+		writeToAsm(convertedCode, comment, false);
+	}else{
+		std::string convertedCode = "RET\n" + currentAsmFunction + " EDNP\n";
+		std::string comment = currentFunction + " function ending";
+		writeToAsm(convertedCode, comment, false);
+	}
 }
 ;
 
@@ -583,19 +639,28 @@ var_declaration : type_specifier declaration_list SEMICOLON
 				}
 				else{
 					//asm code
-					asmFile << "\n	;var definition " << vars[i].getName() <<  std::endl;
-					if(symbolTable.getCurrentScopeID().size() == 1){ //global vars
-						std::string asmCode = newVarGenerator(vars[i].getName());
+					std::string comment = "var definition " + vars[i].getName();
+					std::string asmCode;
+					bool local = true;
+
+					if(symbolTable.getCurrentScopeID().size() == 1){ 
+						//global vars
+						asmCode = newVarGenerator(vars[i].getName());
+
 						symbolTable.insert(vars[i].getName(), "ID_" + $1->getName(), asmCode);
-						asmFile << asmCode << " DW ?\n";
-					}else{ //regular vars
+						asmCode += " DW ?\n";
+						local = false;
+					}else{ 
+						//regular vars
 						currentOffset++;
+						asmCode = "[BP - " + std::to_string(currentOffset*2) + "]";
 						int temp = offsetStack.top(); offsetStack.pop();
 						offsetStack.push(temp + 1);
-						std::string asmCode = "[ BP - " + std::to_string(currentOffset*2) + "]";
+
 						symbolTable.insert(vars[i].getName(), "ID_" + $1->getName(), asmCode);
-						asmFile << "SUB SP, 2\n";
+						asmCode = "SUB SP, 2\n";
 					}
+					writeToAsm(asmCode, comment, local);
 				}
 			}
 		}
@@ -932,9 +997,9 @@ compound_statement
 	$$ = new SymbolInfo(codeText, "");
 
 	//asm code
-	asmFile << "\n	;printf(" << scopeId->getName() << ")" << std::endl;
-	asmFile << "MOV AX," << scopeId->getAsm() << std::endl;
-	asmFile << "CALL PRINT\n" << std::endl;
+	std::string comment = "printf(" + scopeId->getName() + ")";
+	std::string asmCode = "MOV AX," + scopeId->getAsm() + "\nCALL PRINT\n";
+	writeToAsm(asmCode, comment, true);
 }
 
 
