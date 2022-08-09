@@ -283,14 +283,17 @@ func_definition : type_specifier ID LPAREN parameter_list RPAREN
 		}
 	}
 	symbolTable.enterScope();
+	offsetStack.push(0);
 	tabSpace++;
 	for(int i = 0; i < defn.size(); i++){
-		if(!symbolTable.insert(defn[i].getName(), defn[i].getType(), " ")) errorLog("Multiple declaration of " + defn[i].getName() + " in parameter");
+		std::string asmCode = "[BP + " + std::to_string(2*(i+2)) + " ]";
+		if(!symbolTable.insert(defn[i].getName(), defn[i].getType(), asmCode)) errorLog("Multiple declaration of " + defn[i].getName() + " in parameter");
 	}
 	//code logs are included in next part
 
 
-	//asmCode
+	//asm code
+	asmFile << "\n	;function initialization" << std::endl;
 	if(currentFunction == "main") 
 		asmFile << "MAIN PROC\n\n\n" << "MOV AX, @" << "DATA\n" << "MOV DS, AX\n" << std::endl;
 	else{
@@ -299,6 +302,7 @@ func_definition : type_specifier ID LPAREN parameter_list RPAREN
 	}
 
 	asmFile << "PUSH BP\n" << "MOV BP, SP" << std::endl;
+	currentOffset = 0;
 } 
 compound_statement 
 {
@@ -309,6 +313,8 @@ compound_statement
 	yacclogfile << "Scope #" << symbolTable.getCurrentScopeID() << " Exited" << std::endl;
 	yacclogfile << symbolTable.printAllScopeTable() << std::endl << std::endl;
 	symbolTable.exitScope();
+	asmFile << "ADD SP, " + std::to_string(offsetStack.top()*2) + "\n";
+	offsetStack.pop();
 	tabSpace--;
 
 	if($1->getName() == "INT") $1->setName("int");
@@ -324,6 +330,7 @@ compound_statement
 	$$ = new SymbolInfo(codeText, "");
 
 	//asm code
+	asmFile << "\n	;function end" << std::endl;
 	asmFile << "POP BP" << std::endl;
 	if(currentFunction == "main") 
 		asmFile << "\nMOV AH,4CH\nINT 21h\nMAIN ENDP\n" << "END MAIN\n\n" << std::endl;
@@ -391,10 +398,12 @@ compound_statement
 		}
 	}
 	symbolTable.enterScope();
+	offsetStack.push(0);
 	tabSpace++;
 	//code logs are included in next part
 
-	//asmCode
+	//asm code
+	asmFile << "\n	;function initialization" << std::endl;
 	if(currentFunction == "main") 
 		asmFile << "MAIN PROC\n\n\n" << "MOV AX, @" << "DATA\n" << "MOV DS, AX\n" << std::endl;
 	else{
@@ -403,6 +412,7 @@ compound_statement
 	}
 
 	asmFile << "PUSH BP\n" << "MOV BP, SP" << std::endl;
+	currentOffset = 0;
 } 
 compound_statement 
 {
@@ -413,6 +423,8 @@ compound_statement
 	yacclogfile << "Scope #" << symbolTable.getCurrentScopeID() << " Exited" << std::endl;
 	yacclogfile << symbolTable.printAllScopeTable() << std::endl << std::endl;
 	symbolTable.exitScope();
+	asmFile << "ADD SP, " + std::to_string(offsetStack.top()*2) + "\n";
+	offsetStack.pop();
 	tabSpace--;
 
 	if($1->getName() == "INT") $1->setName("int");
@@ -426,6 +438,7 @@ compound_statement
 	$$ = new SymbolInfo(codeText, "");
 
 	//asm code
+	asmFile << "\n	;function end" << std::endl;
 	asmFile << "POP BP" << std::endl;
 	if(currentFunction == "main") 
 		asmFile << "\nMOV AH,4CH\nINT 21h\nMAIN ENDP\n" << "END MAIN\n\n" << std::endl;
@@ -568,8 +581,22 @@ var_declaration : type_specifier declaration_list SEMICOLON
 			{	if(vars[i].getType() == "ARRAY"){
 					symbolTable.insert(vars[i].getName(), "ARRAY_" + $1->getName(), vars[i].getSize(), " ");
 				}
-				else
-					symbolTable.insert(vars[i].getName(), "ID_" + $1->getName(), " ");
+				else{
+					//asm code
+					asmFile << "\n	;var definition " << vars[i].getName() <<  std::endl;
+					if(symbolTable.getCurrentScopeID().size() == 1){ //global vars
+						std::string asmCode = newVarGenerator(vars[i].getName());
+						symbolTable.insert(vars[i].getName(), "ID_" + $1->getName(), asmCode);
+						asmFile << asmCode << " DW ?\n";
+					}else{ //regular vars
+						currentOffset++;
+						int temp = offsetStack.top(); offsetStack.pop();
+						offsetStack.push(temp + 1);
+						std::string asmCode = "[ BP - " + std::to_string(currentOffset*2) + "]";
+						symbolTable.insert(vars[i].getName(), "ID_" + $1->getName(), asmCode);
+						asmFile << "SUB SP, 2\n";
+					}
+				}
 			}
 		}
 	}
@@ -790,7 +817,7 @@ statement : var_declaration
 	$$ = new SymbolInfo(codeText, "");
 }
 
-| {symbolTable.enterScope();tabSpace++;}
+| {symbolTable.enterScope();offsetStack.push(0);tabSpace++;}
 compound_statement 
 {
 	//done
@@ -802,6 +829,8 @@ compound_statement
 	yacclogfile << "Scope #" << symbolTable.getCurrentScopeID() << " Exited" << std::endl;
 	yacclogfile << symbolTable.printAllScopeTable() << std::endl << std::endl;
 	symbolTable.exitScope();
+	asmFile << "ADD SP, " + std::to_string(offsetStack.top()*2) + "\n";
+	offsetStack.pop();
 	tabSpace--;
 	
 	std::string codeText($2->getName() + "\n");
@@ -900,7 +929,12 @@ compound_statement
 						+$3->getName()
 						+");\n");
 	logCode(codeText, "statements : PRINTLN LPAREN ID RPAREN SEMICOLON");
-	$$ = new SymbolInfo(codeText, "");	
+	$$ = new SymbolInfo(codeText, "");
+
+	//asm code
+	asmFile << "\n	;printf(" << scopeId->getName() << ")" << std::endl;
+	asmFile << "MOV AX," << scopeId->getAsm() << std::endl;
+	asmFile << "CALL PRINT\n" << std::endl;
 }
 
 

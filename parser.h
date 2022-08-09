@@ -22,7 +22,7 @@ std::ofstream errorFile;
 //asm code
 std::ofstream asmFile;
 std::stack<int> offsetStack;
-int currentStack;
+int currentOffset = 0;
 
 extern unsigned int lineCount;
 extern unsigned int lexErrorCount;
@@ -104,6 +104,12 @@ std::string currentAsmFunction;
 std::string newFuncGenerator(std::string funcName){
     functionNumber++;
     return funcName + std::to_string(functionNumber);
+}
+
+unsigned globalVarCounter = 0;
+std::string newVarGenerator(std::string varName){
+    globalVarCounter++;
+    return varName + std::to_string(globalVarCounter);
 }
 
 void initAsmCode(){
