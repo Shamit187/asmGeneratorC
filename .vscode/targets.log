@@ -1,6 +1,4 @@
 make all --print-data-base --no-builtin-variables --no-builtin-rules --question
-make: *** No rule to make target 'all'.  Stop.
-
 # GNU Make 4.3
 # Built for x86_64-pc-linux-gnu
 # Copyright (C) 1988-2020 Free Software Foundation, Inc.
@@ -8,7 +6,7 @@ make: *** No rule to make target 'all'.  Stop.
 # This is free software: you are free to change and redistribute it.
 # There is NO WARRANTY, to the extent permitted by law.
 
-# Make data base, printed on Mon Aug  8 20:50:46 2022
+# Make data base, printed on Tue Aug  9 13:41:20 2022
 
 # Variables
 
@@ -16,8 +14,6 @@ make: *** No rule to make target 'all'.  Stop.
 GDK_BACKEND = x11
 # environment
 LC_ALL = C
-# environment
-NO_AT_BRIDGE = 1
 # environment
 GNOME_SHELL_SESSION_MODE = ubuntu
 # environment
@@ -27,7 +23,7 @@ LC_NAME = bn_BD
 # environment
 LC_NUMERIC = bn_BD
 # environment
-VSCODE_CWD = /home/shamit/CodeFiles/yacc_lex/asmGeneratorC
+VSCODE_CWD = /home/shamit
 # environment
 NVM_DIR = /home/shamit/.nvm
 # environment
@@ -48,8 +44,6 @@ PWD = /home/shamit/CodeFiles/yacc_lex/asmGeneratorC
 %D = $(patsubst %/,%,$(dir $%))
 # environment
 XDG_DATA_DIRS = /usr/share/ubuntu:/usr/local/share/:/usr/share/:/var/lib/snapd/desktop
-# environment
-OLDPWD = /home/shamit/Downloads/L3T1-master/CSE 310/Offline4
 # automatic
 ^D = $(patsubst %/,%,$(dir $^))
 # automatic
@@ -61,21 +55,19 @@ VSCODE_CODE_CACHE_PATH = /home/shamit/.config/Code/CachedData/da76f93349a72022ca
 # environment
 LANG = C
 # environment
-XAUTHORITY = /run/user/1000/.mutter-Xwaylandauth.R40VQ1
+XAUTHORITY = /run/user/1000/.mutter-Xwaylandauth.7UVJQ1
 # default
 .LOADED := 
 # default
 .INCLUDE_DIRS = /usr/local/include /usr/include /usr/include
 # environment
-GNOME_TERMINAL_SERVICE = :1.100
+GNOME_TERMINAL_SERVICE = :1.101
 # makefile
 MAKEFLAGS = pqrR
-# environment
-DBUS_STARTER_ADDRESS = unix:path=/run/user/1000/bus,guid=9fce83d47d93df37f6a8177162f1197d
 # makefile
 CURDIR := /home/shamit/CodeFiles/yacc_lex/asmGeneratorC
 # environment
-APPLICATION_INSIGHTS_NO_DIAGNOSTIC_CHANNEL = 1
+APPLICATION_INSIGHTS_NO_DIAGNOSTIC_CHANNEL = true
 # environment
 LESSOPEN = | /usr/bin/lesspipe %s
 # automatic
@@ -101,19 +93,19 @@ MAKEFILE_LIST := makefile
 # automatic
 @F = $(notdir $@)
 # environment
-VSCODE_PID = 14570
+VSCODE_PID = 4130
 # environment
 XDG_SESSION_TYPE = wayland
 # automatic
 ?D = $(patsubst %/,%,$(dir $?))
 # environment
-SESSION_MANAGER = local/shamit-ZenBook-UX425EA-UX425EA:@/tmp/.ICE-unix/1998,unix/shamit-ZenBook-UX425EA-UX425EA:/tmp/.ICE-unix/1998
+SESSION_MANAGER = local/shamit-ZenBook-UX425EA-UX425EA:@/tmp/.ICE-unix/2099,unix/shamit-ZenBook-UX425EA-UX425EA:/tmp/.ICE-unix/2099
 # automatic
 *F = $(notdir $*)
 # environment
 CHROME_DESKTOP = code-url-handler.desktop
 # environment
-DBUS_SESSION_BUS_ADDRESS = unix:path=/run/user/1000/bus,guid=9fce83d47d93df37f6a8177162f1197d
+DBUS_SESSION_BUS_ADDRESS = unix:path=/run/user/1000/bus
 # automatic
 <D = $(patsubst %/,%,$(dir $<))
 # environment
@@ -131,7 +123,7 @@ XMODIFIERS = @im=ibus
 # environment
 SHLVL = 1
 # environment
-GNOME_TERMINAL_SCREEN = /org/gnome/Terminal/screen/8e6e1730_31b5_4356_84ba_b46c30e0cd9b
+GNOME_TERMINAL_SCREEN = /org/gnome/Terminal/screen/6b4240f8_1d0c_4adf_a900_b10cae8ca007
 # environment
 MAKELEVEL := 0
 # default
@@ -173,7 +165,7 @@ LOGNAME = shamit
 # makefile
 .DEFAULT_GOAL := create
 # environment
-SYSTEMD_EXEC_PID = 1998
+SYSTEMD_EXEC_PID = 2300
 # environment
 DISPLAY = :0
 # environment
@@ -182,8 +174,6 @@ USER = shamit
 GTK_MODULES = gail:atk-bridge
 # default
 MAKE_VERSION := 4.3
-# environment
-DBUS_STARTER_BUS_TYPE = session
 # environment
 LC_MEASUREMENT = bn_BD
 # environment
@@ -233,7 +223,7 @@ GDMSESSION = ubuntu
 # environment
 LC_IDENTIFICATION = bn_BD
 # variable set hash-table stats:
-# Load=110/1024=11%, Rehash=0, Collisions=11/140=8%
+# Load=106/1024=10%, Rehash=0, Collisions=10/136=7%
 
 # Pattern-specific Variable Values
 
@@ -241,9 +231,9 @@ LC_IDENTIFICATION = bn_BD
 
 # Directories
 
-# . (device 66307, inode 2494789): 14 files, no impossibilities.
+# . (device 66307, inode 2494789): 19 files, no impossibilities.
 
-# 14 files, no impossibilities in 1 directories.
+# 19 files, no impossibilities in 1 directories.
 
 # Implicit Rules
 
@@ -300,16 +290,18 @@ create:
 # VPATH Search Paths
 
 # No 'vpath' search paths.
- 
 
 # No general ('VPATH' variable) search path.
 
-# strcache buffers: 1 (0) / strings = 20 / storage = 177 B / avg = 8 B
-# current buf: size = 8162 B / used = 177 B / count = 20 / avg = 8 B
+# strcache buffers: 1 (0) / strings = 25 / storage = 287 B / avg = 11 B
+# current buf: size = 8162 B / used = 287 B / count = 25 / avg = 11 B
 
-# strcache performance: lookups = 25 / hit rate = 20%
+# strcache performance: lookups = 30 / hit rate = 16%
 # hash-table stats:
-# Load=20/8192=0%, Rehash=0, Collisions=0/25=0%
-# Finished Make data base on Mon Aug  8 20:50:46 2022
+# Load=25/8192=0%, Rehash=0, Collisions=0/30=0%
+ 
+make: *** No rule to make target 'all'.  Stop.
+
+# Finished Make data base on Tue Aug  9 13:41:20 2022
 
  

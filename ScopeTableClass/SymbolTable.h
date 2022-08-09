@@ -19,8 +19,9 @@ public:
     std::string exitScope();
 
     bool insert(std::string name, std::string type);
+    bool insert(std::string name, std::string type, std::string asmCode);
     bool insert(std::string name, std::string type, std::vector<SymbolInfo> paramList);
-    bool insert(std::string name, std::string type, unsigned size);
+    bool insert(std::string name, std::string type, unsigned size, std::string asmCode);
     bool remove(std::string name);
 
     SymbolInfo* lookup(std::string name);

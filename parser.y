@@ -82,6 +82,8 @@ unit : var_declaration
 	logCode(codeText, "unit : func_definition");
 	$$ = new SymbolInfo(codeText, "");
 }
+
+
 |UNRECOGNIZED
 {
 	errorLog("Unrecognized Character");
@@ -283,9 +285,20 @@ func_definition : type_specifier ID LPAREN parameter_list RPAREN
 	symbolTable.enterScope();
 	tabSpace++;
 	for(int i = 0; i < defn.size(); i++){
-		if(!symbolTable.insert(defn[i].getName(), defn[i].getType())) errorLog("Multiple declaration of " + defn[i].getName() + " in parameter");
+		if(!symbolTable.insert(defn[i].getName(), defn[i].getType(), " ")) errorLog("Multiple declaration of " + defn[i].getName() + " in parameter");
 	}
 	//code logs are included in next part
+
+
+	//asmCode
+	if(currentFunction == "main") 
+		asmFile << "MAIN PROC\n\n\n" << "MOV AX, @" << "DATA\n" << "MOV DS, AX\n" << std::endl;
+	else{
+		currentAsmFunction = newFuncGenerator(currentFunction);
+		asmFile << currentAsmFunction << " PROC\n" << std::endl;
+	}
+
+	asmFile << "PUSH BP\n" << "MOV BP, SP" << std::endl;
 } 
 compound_statement 
 {
@@ -309,6 +322,13 @@ compound_statement
 						+ $7->getName());
 	logCode(codeText, "func_definition : type_specifier ID LPAREN parameter_list RPAREN compound_statement");
 	$$ = new SymbolInfo(codeText, "");
+
+	//asm code
+	asmFile << "POP BP" << std::endl;
+	if(currentFunction == "main") 
+		asmFile << "\nMOV AH,4CH\nINT 21h\nMAIN ENDP\n" << "END MAIN\n\n" << std::endl;
+	else 
+		asmFile << "\nRET\n" << currentAsmFunction << " EDNP\n\n" << std::endl;
 }
 
 
@@ -373,6 +393,16 @@ compound_statement
 	symbolTable.enterScope();
 	tabSpace++;
 	//code logs are included in next part
+
+	//asmCode
+	if(currentFunction == "main") 
+		asmFile << "MAIN PROC\n\n\n" << "MOV AX, @" << "DATA\n" << "MOV DS, AX\n" << std::endl;
+	else{
+		currentAsmFunction = newFuncGenerator(currentFunction);
+		asmFile << currentAsmFunction << " PROC\n" << std::endl;
+	}
+
+	asmFile << "PUSH BP\n" << "MOV BP, SP" << std::endl;
 } 
 compound_statement 
 {
@@ -394,6 +424,13 @@ compound_statement
 						+ $6->getName());
 	logCode(codeText, "func_definition : type_specifier ID LPAREN RPAREN compound_statement");
 	$$ = new SymbolInfo(codeText, "");
+
+	//asm code
+	asmFile << "POP BP" << std::endl;
+	if(currentFunction == "main") 
+		asmFile << "\nMOV AH,4CH\nINT 21h\nMAIN ENDP\n" << "END MAIN\n\n" << std::endl;
+	else 
+		asmFile << "\nRET\n" << currentAsmFunction << " EDNP\n\n" << std::endl;
 }
 ;
 
@@ -529,10 +566,10 @@ var_declaration : type_specifier declaration_list SEMICOLON
 				errorLog("Multiple declaration of " + vars[i].getName());
 			}else
 			{	if(vars[i].getType() == "ARRAY"){
-					symbolTable.insert(vars[i].getName(), "ARRAY_" + $1->getName(), vars[i].getSize());
+					symbolTable.insert(vars[i].getName(), "ARRAY_" + $1->getName(), vars[i].getSize(), " ");
 				}
 				else
-					symbolTable.insert(vars[i].getName(), "ID_" + $1->getName());
+					symbolTable.insert(vars[i].getName(), "ID_" + $1->getName(), " ");
 			}
 		}
 	}
@@ -601,7 +638,7 @@ declaration_list : declaration_list COMMA ID
 						+"["
 						+$5->getName()
 						+"]");
-	$1->pushParam(SymbolInfo($3->getName(), "ARRAY", std::stoi($5->getName())));
+	$1->pushParam(SymbolInfo($3->getName(), "ARRAY", std::stoi($5->getName()), ""));
 
 	$1->setName(codeText);
 	$$ = $1;
@@ -659,7 +696,7 @@ declaration_list : declaration_list COMMA ID
 						+"["
 						+$3->getName()
 						+"]");
-	paramList.push_back(SymbolInfo($1->getName(), "ARRAY", std::stoi($3->getName())));
+	paramList.push_back(SymbolInfo($1->getName(), "ARRAY", std::stoi($3->getName()), " "));
 
 	logCode(codeText, "eclaration_list : ID LTHIRD CONST_INT RTHIRD");
 	$$ = new SymbolInfo(codeText, "", paramList);
@@ -1379,6 +1416,8 @@ arguments : arguments COMMA logic_expression
 	$1->setName(codeText);
 	$$ = $1;
 }
+
+
 | logic_expression 
 {
 	std::vector<SymbolInfo> paramList;
@@ -1407,6 +1446,9 @@ int main(int argc,char *argv[])
     yacclogfile.open("1805055_yacc_log.txt");
     errorFile.open("1805055_yacc_error.txt");
 
+	asmFile.open("1805055_asm_code.txt");
+	initAsmCode();
+
     yyin = inputFile;
     yyparse();
 
@@ -1421,6 +1463,7 @@ int main(int argc,char *argv[])
 	lextokenfile.close();
 	yacclogfile.close();
 	errorFile.close();
+	asmFile.close();
 
     return 0;    
 }

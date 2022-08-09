@@ -63,6 +63,14 @@ bool SymbolTable::insert(std::string name, std::string type){
     return current->insert(name, type);
 }
 
+bool SymbolTable::insert(std::string name, std::string type, std::string asmCode){
+    if(current == nullptr){
+        enterScope();
+        globalScope = current;
+    }
+    return current->insert(name, type, asmCode);
+}
+
 bool SymbolTable::insert(std::string name, std::string type, std::vector<SymbolInfo> paramList){
     if(current == nullptr){
         enterScope();
@@ -71,12 +79,12 @@ bool SymbolTable::insert(std::string name, std::string type, std::vector<SymbolI
     return current->insert(name, type, paramList);
 }
 
-bool SymbolTable::insert(std::string name, std::string type, unsigned array_size){
+bool SymbolTable::insert(std::string name, std::string type, unsigned array_size, std::string asmCode){
     if(current == nullptr){
         enterScope();
         globalScope = current;
     }
-    return current->insert(name, type, array_size);
+    return current->insert(name, type, array_size, asmCode);
 }
 
 bool SymbolTable::remove(std::string name){

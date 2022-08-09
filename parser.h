@@ -2,6 +2,7 @@
 #include <fstream>
 #include <algorithm>
 #include <vector>
+#include <stack>
 
 using namespace std;
 
@@ -17,6 +18,11 @@ extern std::ofstream lextokenfile;
 
 std::ofstream yacclogfile;
 std::ofstream errorFile;
+
+//asm code
+std::ofstream asmFile;
+std::stack<int> offsetStack;
+int currentStack;
 
 extern unsigned int lineCount;
 extern unsigned int lexErrorCount;
@@ -90,5 +96,23 @@ std::string indentGen(){
             returnStr += "\t";
         }
         return returnStr;
+    }
+}
+
+unsigned functionNumber = 0;
+std::string currentAsmFunction;
+std::string newFuncGenerator(std::string funcName){
+    functionNumber++;
+    return funcName + std::to_string(functionNumber);
+}
+
+void initAsmCode(){
+
+    std::string line;
+    std::ifstream ini_file{
+        "init.txt"
+    };
+    while (getline(ini_file, line)) {
+        asmFile << line << "\n";
     }
 }

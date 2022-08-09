@@ -1,12 +1,25 @@
 #include "SymbolInfo.h"
 
+
 SymbolInfo::SymbolInfo(std::string name,
                        std::string type)
         :name{name},
          type{type},
          size{0},
          next{nullptr},
-         defined{false}
+         defined{false},
+         asmCode{""}
+{}
+
+SymbolInfo::SymbolInfo(std::string name,
+                       std::string type,
+                       std::string asmCode)
+        :name{name},
+         type{type},
+         size{0},
+         next{nullptr},
+         defined{false},
+         asmCode{asmCode}
 {}
 
 SymbolInfo::SymbolInfo(std::string name,
@@ -17,17 +30,20 @@ SymbolInfo::SymbolInfo(std::string name,
          paramList{paramList},
          size{0},
          next{nullptr},
-         defined{false}
+         defined{false},
+         asmCode{""}
 {}
 
 SymbolInfo::SymbolInfo(std::string name,
                        std::string type,
-                       unsigned size)
+                       unsigned size,
+                       std::string asmCode)
         :name{name},
          type{type},
          size{size},
          next{nullptr},
-         defined{false}
+         defined{false},
+         asmCode{asmCode}
 {}
 
 SymbolInfo::~SymbolInfo()
@@ -43,6 +59,8 @@ std::vector<SymbolInfo> SymbolInfo::getParamList(){return paramList;}
 
 unsigned SymbolInfo::getSize(){return size;}
 
+std::string SymbolInfo::getAsm(){return asmCode;}
+
 void SymbolInfo::setName(std::string newName){this->name = newName;}
 
 void SymbolInfo::setType(std::string newType){this->type = newType;}
@@ -50,6 +68,8 @@ void SymbolInfo::setType(std::string newType){this->type = newType;}
 void SymbolInfo::setNext(SymbolInfo* newNext){this->next = newNext;}
 
 void SymbolInfo::pushParam(SymbolInfo symbolInfo){(this->paramList).push_back(symbolInfo);}
+
+void SymbolInfo::setAsm(std::string asmCode){this->asmCode = asmCode;}
 
 std::ostream& operator<<(std::ostream& os, const SymbolInfo& obj){
     os << "< " << obj.name << " : " << obj.type << " >";

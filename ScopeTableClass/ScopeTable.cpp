@@ -56,6 +56,36 @@ bool ScopeTable::insert(std::string name, std::string type)
     return true;
 }
 
+bool ScopeTable::insert(std::string name, std::string type, std::string asmCode)
+{
+    SymbolInfo* symbolInfo = new SymbolInfo(name, type, asmCode);
+    unsigned int bucket = sdbmHash(name, size);
+
+    SymbolInfo* current = hashTable[bucket];
+    SymbolInfo* prev = nullptr;
+
+    if(current == nullptr)
+
+    {
+        hashTable[bucket] = symbolInfo;
+        return true;
+    }
+    else
+    {
+        while(current != nullptr){
+            prev = current;
+            current = prev->getNext();
+            if(prev->getName() == name)
+            {
+                delete symbolInfo;
+                return false;
+            }
+        }
+        prev->setNext(symbolInfo);
+    }
+    return true;
+}
+
 bool ScopeTable::insert(std::string name, std::string type, std::vector<SymbolInfo> paramList)
 {
     SymbolInfo* symbolInfo = new SymbolInfo(name, type, paramList);
@@ -86,9 +116,9 @@ bool ScopeTable::insert(std::string name, std::string type, std::vector<SymbolIn
     return true;
 }
 
-bool ScopeTable::insert(std::string name, std::string type, unsigned array_size)
+bool ScopeTable::insert(std::string name, std::string type, unsigned array_size, std::string asmCode)
 {
-    SymbolInfo* symbolInfo = new SymbolInfo(name, type, array_size);
+    SymbolInfo* symbolInfo = new SymbolInfo(name, type, array_size, asmCode);
     unsigned int bucket = sdbmHash(name, size);
 
     SymbolInfo* current = hashTable[bucket];
