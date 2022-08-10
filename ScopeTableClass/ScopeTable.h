@@ -35,7 +35,7 @@ public:
     //io operation
     bool insert(std::string name, std::string type);
     bool insert(std::string name, std::string type, std::string asmCode);
-    bool insert(std::string name, std::string type, std::vector<SymbolInfo> paramList);
+    bool insert(std::string name, std::string type, std::vector<SymbolInfo> paramList, std::string asmCode);
     bool insert(std::string name, std::string type, unsigned size, std::string asmCode);
     /* if symbol info expands, add to parameter */
     bool remove(SymbolInfo* symbolInfo);

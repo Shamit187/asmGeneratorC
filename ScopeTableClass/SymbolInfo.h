@@ -23,7 +23,7 @@ public:
     //rid
     SymbolInfo(std::string name, std::string type, std::string asmCode); 
     //function
-    SymbolInfo(std::string name, std::string type, std::vector<SymbolInfo> paramList);
+    SymbolInfo(std::string name, std::string type, std::vector<SymbolInfo> paramList, std::string asmCode);
     //array
     SymbolInfo(std::string name, std::string type, unsigned size, std::string asmCode);
 

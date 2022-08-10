@@ -25,6 +25,8 @@ std::ofstream asmFile;
 std::stack<int> offsetStack;
 int currentOffset = 0;
 
+std::ofstream formattedCode;
+
 extern unsigned int lineCount;
 extern unsigned int lexErrorCount;
 
@@ -133,4 +135,29 @@ void writeToAsm(std::string asmCode, std::string comment, bool indent){
     }
 
     asmFile << std::endl;
+}
+
+std::vector<std::string> splitString(std::string ls, char delim) {
+    std::stringstream stream(ls);
+    std::vector<std::string> v;
+    std::string temp;
+    while(getline(stream, temp, delim)) {
+        v.push_back(temp);
+    }
+    return v;
+}
+
+std::string arrayOffset(std::string asmCode, int index){
+    std::string returnString;
+    if(asmCode[0] == '['){
+        std::vector<std::string>v = splitString(asmCode, ' ');
+        if(v[2] == "-"){
+            returnString = "[ " + v[1] + " - " + std::to_string(std::stoi(v[3]) + index*2) + " ]";
+        }else{
+            returnString = "[ " + v[1] + " + " + std::to_string(std::stoi(v[3]) - index*2) + " ]";
+        }
+    }else{
+        returnString = "[" + asmCode + " + " + std::to_string(index) + "]";
+    }
+    return returnString;
 }

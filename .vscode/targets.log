@@ -6,7 +6,7 @@ make all --print-data-base --no-builtin-variables --no-builtin-rules --question
 # This is free software: you are free to change and redistribute it.
 # There is NO WARRANTY, to the extent permitted by law.
 
-# Make data base, printed on Tue Aug  9 20:34:19 2022
+# Make data base, printed on Wed Aug 10 19:30:06 2022
 
 # Variables
 
@@ -45,7 +45,7 @@ PWD = /home/shamit/CodeFiles/yacc_lex/asmGeneratorC
 # environment
 XDG_DATA_DIRS = /usr/share/ubuntu:/usr/local/share/:/usr/share/:/var/lib/snapd/desktop
 # environment
-OLDPWD = /home/shamit/CodeFiles/yacc_lex
+OLDPWD = /home/shamit
 # automatic
 ^D = $(patsubst %/,%,$(dir $^))
 # automatic
@@ -57,13 +57,13 @@ VSCODE_CODE_CACHE_PATH = /home/shamit/.config/Code/CachedData/da76f93349a72022ca
 # environment
 LANG = C
 # environment
-XAUTHORITY = /run/user/1000/.mutter-Xwaylandauth.KR5LQ1
+XAUTHORITY = /run/user/1000/.mutter-Xwaylandauth.CC9PQ1
 # default
 .LOADED := 
 # default
 .INCLUDE_DIRS = /usr/local/include /usr/include /usr/include
 # environment
-GNOME_TERMINAL_SERVICE = :1.101
+GNOME_TERMINAL_SERVICE = :1.146
 # makefile
 MAKEFLAGS = pqrR
 # makefile
@@ -95,13 +95,13 @@ MAKEFILE_LIST := makefile
 # automatic
 @F = $(notdir $@)
 # environment
-VSCODE_PID = 4042
+VSCODE_PID = 5247
 # environment
 XDG_SESSION_TYPE = wayland
 # automatic
 ?D = $(patsubst %/,%,$(dir $?))
 # environment
-SESSION_MANAGER = local/shamit-ZenBook-UX425EA-UX425EA:@/tmp/.ICE-unix/1979,unix/shamit-ZenBook-UX425EA-UX425EA:/tmp/.ICE-unix/1979
+SESSION_MANAGER = local/shamit-ZenBook-UX425EA-UX425EA:@/tmp/.ICE-unix/2222,unix/shamit-ZenBook-UX425EA-UX425EA:/tmp/.ICE-unix/2222
 # automatic
 *F = $(notdir $*)
 # environment
@@ -125,7 +125,7 @@ XMODIFIERS = @im=ibus
 # environment
 SHLVL = 1
 # environment
-GNOME_TERMINAL_SCREEN = /org/gnome/Terminal/screen/bfb65e4a_1135_4c98_af2b_af7e390e0e0d
+GNOME_TERMINAL_SCREEN = /org/gnome/Terminal/screen/c64197a1_fe00_4da7_9f1a_076f1be46e79
 # environment
 MAKELEVEL := 0
 # default
@@ -293,9 +293,6 @@ create:
 
 # No 'vpath' search paths.
 
- 
-make: *** No rule to make target 'all'.  Stop.
-
 # No general ('VPATH' variable) search path.
 
 # strcache buffers: 1 (0) / strings = 24 / storage = 280 B / avg = 11 B
@@ -304,6 +301,8 @@ make: *** No rule to make target 'all'.  Stop.
 # strcache performance: lookups = 29 / hit rate = 17%
 # hash-table stats:
 # Load=24/8192=0%, Rehash=0, Collisions=0/29=0%
-# Finished Make data base on Tue Aug  9 20:34:19 2022
+# Finished Make data base on Wed Aug 10 19:30:06 2022
 
  
+make: *** No rule to make target 'all'.  Stop.
+

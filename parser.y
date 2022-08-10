@@ -30,6 +30,7 @@ start : program
 	std::string codeText($1->getName());
 	logCode(codeText, "start : program");
 	$$ = new SymbolInfo(codeText, "");
+	formattedCode << codeText << std::endl;
 }
 ;
 
@@ -127,7 +128,7 @@ func_declaration : type_specifier ID LPAREN parameter_list RPAREN SEMICOLON
 		}
 		if(!voidFlag)
 		{
-			symbolTable.insert($2->getName(), "FUNC_" + $1->getName(), vars);
+			symbolTable.insert($2->getName(), "FUNC_" + $1->getName(), vars, newFuncGenerator($2->getName()));
 			if($1->getName() == "INT") $1->setName("int");
 			if($1->getName() == "FLOAT") $1->setName("float");
 			if($1->getName() == "VOID") $1->setName("void");
@@ -156,7 +157,7 @@ func_declaration : type_specifier ID LPAREN parameter_list RPAREN SEMICOLON
 	if(globalAvailability != nullptr){
 		errorLog("Multiple declaration of same name " + $2->getName());
 	}else{
-		symbolTable.insert($2->getName(), "FUNC_" + $1->getName());
+		symbolTable.insert($2->getName(), "FUNC_" + $1->getName(), newFuncGenerator($2->getName()));
 		if($1->getName() == "INT") $1->setName("int");
 		if($1->getName() == "FLOAT") $1->setName("float");
 		if($1->getName() == "VOID") $1->setName("void");
@@ -273,7 +274,7 @@ func_definition : type_specifier ID LPAREN parameter_list RPAREN
 						//Global Availability = nullptr means that the function isn't declared before, so it needs to be included in the symboltable
 						if(globalAvailability == nullptr)
 						{
-							symbolTable.insert($2->getName(), "FUNC_" + $1->getName(), defn);
+							symbolTable.insert($2->getName(), "FUNC_" + $1->getName(), defn, newFuncGenerator($2->getName()));
 						}
 						insertParameterFlag = true; // should not include parameters to symboltable here, must do it after entering a new scope
 						symbolTable.define($2->getName());
@@ -291,30 +292,33 @@ func_definition : type_specifier ID LPAREN parameter_list RPAREN
 	}
 	//code logs are included in next part
 
+	globalAvailability = symbolTable.lookGlobalScope($2->getName());
 
-	//asm code
-	if(currentFunction == "main"){
-		std::string convertedCode = "MAIN PROC\n";
-		std::string comment = "main function initialization";
+	if(globalAvailability != nullptr){
+		//asm code
+		if(currentFunction == "main"){
+			std::string convertedCode = "MAIN PROC\n";
+			std::string comment = "main function initialization";
 
-		writeToAsm(convertedCode, comment, false);
+			writeToAsm(convertedCode, comment, false);
 
-		convertedCode = "MOV AX, @DATA\nMOV DS, AX\n";
-		comment = "data initialization";
+			convertedCode = "MOV AX, @DATA\nMOV DS, AX\n";
+			comment = "data initialization";
 
+			writeToAsm(convertedCode, comment, true);
+		}else{
+			currentAsmFunction = globalAvailability->getAsm();
+			std::string convertedCode = currentAsmFunction + " PROC\n";
+			std::string comment = currentFunction + " function initialization";
+
+			writeToAsm(convertedCode, comment, false);
+		}	
+		std::string convertedCode = "PUSH BP\nMOV BP, SP";
+		std::string comment = "function stack movement for recursive calling";
 		writeToAsm(convertedCode, comment, true);
-	}else{
-		currentAsmFunction = newFuncGenerator(currentFunction);
-		std::string convertedCode = currentAsmFunction + " PROC\n";
-		std::string comment = currentFunction + " function initialization";
 
-		writeToAsm(convertedCode, comment, false);
-	}	
-	std::string convertedCode = "PUSH BP\nMOV BP, SP";
-	std::string comment = "function stack movement for recursive calling";
-	writeToAsm(convertedCode, comment, true);
-
-	currentOffset = 0;
+		currentOffset = 0;
+	}
 } 
 compound_statement 
 {
@@ -418,7 +422,7 @@ compound_statement
 				{
 					if(globalAvailability == nullptr)
 					{
-						symbolTable.insert($2->getName(), "FUNC_" + $1->getName());
+						symbolTable.insert($2->getName(), "FUNC_" + $1->getName(), newFuncGenerator($2->getName()));
 					}
 					symbolTable.define($2->getName());
 				}
@@ -429,30 +433,33 @@ compound_statement
 	offsetStack.push(0);
 	tabSpace++;
 	//code logs are included in next part
+	globalAvailability = symbolTable.lookGlobalScope($2->getName());
 
-	//asm code
-	if(currentFunction == "main"){
-		std::string convertedCode = "MAIN PROC\n";
-		std::string comment = "main function initialization";
+	if(globalAvailability != nullptr){
+		//asm code
+		if(currentFunction == "main"){
+			std::string convertedCode = "MAIN PROC\n";
+			std::string comment = "main function initialization";
 
-		writeToAsm(convertedCode, comment, false);
+			writeToAsm(convertedCode, comment, false);
 
-		convertedCode = "MOV AX, @DATA\nMOV DS, AX\n";
-		comment = "data initialization";
+			convertedCode = "MOV AX, @DATA\nMOV DS, AX\n";
+			comment = "data initialization";
 
+			writeToAsm(convertedCode, comment, true);
+		}else{
+			currentAsmFunction = globalAvailability->getAsm();
+			std::string convertedCode = currentAsmFunction + " PROC\n";
+			std::string comment = currentFunction + " function initialization";
+
+			writeToAsm(convertedCode, comment, false);
+		}	
+		std::string convertedCode = "PUSH BP\nMOV BP, SP";
+		std::string comment = "function stack movement for recursive calling";
 		writeToAsm(convertedCode, comment, true);
-	}else{
-		currentAsmFunction = newFuncGenerator(currentFunction);
-		std::string convertedCode = currentAsmFunction + " PROC\n";
-		std::string comment = currentFunction + " function initialization";
 
-		writeToAsm(convertedCode, comment, false);
-	}	
-	std::string convertedCode = "PUSH BP\nMOV BP, SP";
-	std::string comment = "function stack movement for recursive calling";
-	writeToAsm(convertedCode, comment, true);
-
-	currentOffset = 0;
+		currentOffset = 0;
+	}
 } 
 compound_statement 
 {
@@ -562,7 +569,7 @@ parameter_list : parameter_list COMMA type_specifier ID
 	if($1->getName() == "VOID") $1->setName("void");
 	std::string codeText($1->getName() + " " + $2->getName());
 	logCode(codeText, "parameter_list : type_specifier ID");
-	$$ = new SymbolInfo(codeText, "", paramList);
+	$$ = new SymbolInfo(codeText, "", paramList, "");
 }
 
 
@@ -582,7 +589,7 @@ parameter_list : parameter_list COMMA type_specifier ID
 	if($1->getName() == "VOID") $1->setName("void");
 	std::string codeText($1->getName());
 	logCode(codeText, "parameter_list :  type_specifier");
-	$$ = new SymbolInfo(codeText, "", paramList);
+	$$ = new SymbolInfo(codeText, "", paramList,"");
 }
 ;
 
@@ -635,11 +642,33 @@ var_declaration : type_specifier declaration_list SEMICOLON
 				errorLog("Multiple declaration of " + vars[i].getName());
 			}else
 			{	if(vars[i].getType() == "ARRAY"){
-					symbolTable.insert(vars[i].getName(), "ARRAY_" + $1->getName(), vars[i].getSize(), " ");
+					//asm code
+					std::string comment = "array declaration " + vars[i].getName() + " of size " + std::to_string(vars[i].getSize());
+					std::string asmCode;
+					bool local = true;
+
+					if(symbolTable.getCurrentScopeID().size() == 1){
+						//global arr
+						asmCode = newVarGenerator(vars[i].getName());
+
+						symbolTable.insert(vars[i].getName(), "ARRAY_" + $1->getName(), vars[i].getSize(), asmCode);
+						asmCode += " DW " + std::to_string(vars[i].getSize()) + " DUP(?)\n";
+						local = false;
+					}else{
+						//regular arr
+						asmCode = "[BP - " + std::to_string((currentOffset + 1 )*2) + "]";
+						currentOffset += vars[i].getSize();
+						int temp = offsetStack.top(); offsetStack.pop();
+						offsetStack.push(temp + vars[i].getSize());
+
+						symbolTable.insert(vars[i].getName(), "ARRAY_" + $1->getName(), vars[i].getSize(), asmCode);
+						asmCode = "SUB SP, " + std::to_string(vars[i].getSize() * 2) + "\n";
+					}
+					writeToAsm(asmCode, comment, local);
 				}
 				else{
 					//asm code
-					std::string comment = "var definition " + vars[i].getName();
+					std::string comment = "var declaration " + vars[i].getName();
 					std::string asmCode;
 					bool local = true;
 
@@ -776,7 +805,7 @@ declaration_list : declaration_list COMMA ID
 
 	paramList.push_back(SymbolInfo($1->getName(), "ID"));
 	logCode(codeText, "declaration_list : ID");
-	$$ = new SymbolInfo(codeText, "", paramList);
+	$$ = new SymbolInfo(codeText, "", paramList, "");
 }
 
 
@@ -791,7 +820,7 @@ declaration_list : declaration_list COMMA ID
 	paramList.push_back(SymbolInfo($1->getName(), "ARRAY", std::stoi($3->getName()), " "));
 
 	logCode(codeText, "eclaration_list : ID LTHIRD CONST_INT RTHIRD");
-	$$ = new SymbolInfo(codeText, "", paramList);
+	$$ = new SymbolInfo(codeText, "", paramList, "");
 }
 | ID LTHIRD CONST_FLOAT RTHIRD
 {
@@ -804,7 +833,7 @@ declaration_list : declaration_list COMMA ID
 	// paramList.push_back(SymbolInfo($1->getName(), "ARRAY", std::stoi($3->getName())));
 
 	errorLog("Array size can not be float");
-	$$ = new SymbolInfo(codeText, "", paramList);
+	$$ = new SymbolInfo(codeText, "", paramList, "");
 }
 | ID LTHIRD RTHIRD
 {
@@ -815,7 +844,7 @@ declaration_list : declaration_list COMMA ID
 	// paramList.push_back(SymbolInfo($1->getName(), "ARRAY", std::stoi($3->getName())));
 
 	errorLog("Array size undeclared");
-	$$ = new SymbolInfo(codeText, "", paramList);
+	$$ = new SymbolInfo(codeText, "", paramList, "");
 }
 ;
 
@@ -1524,7 +1553,7 @@ arguments : arguments COMMA logic_expression
 
 	paramList.push_back(SymbolInfo("", $1->getType()));
 	logCode(codeText, "arguments : logic_expression");
-	$$ = new SymbolInfo(codeText, "", paramList);
+	$$ = new SymbolInfo(codeText, "", paramList, "");
 }
 ;
 
@@ -1545,8 +1574,10 @@ int main(int argc,char *argv[])
     yacclogfile.open("1805055_yacc_log.txt");
     errorFile.open("1805055_yacc_error.txt");
 
-	asmFile.open("1805055_asm_code.txt");
+	asmFile.open("1805055_asm_code.asm");
 	initAsmCode();
+
+	formattedCode.open("1805055_formatted_code.txt");
 
     yyin = inputFile;
     yyparse();
@@ -1563,6 +1594,7 @@ int main(int argc,char *argv[])
 	yacclogfile.close();
 	errorFile.close();
 	asmFile.close();
+	formattedCode.close();
 
     return 0;    
 }

@@ -24,14 +24,15 @@ SymbolInfo::SymbolInfo(std::string name,
 
 SymbolInfo::SymbolInfo(std::string name,
                        std::string type,
-                       std::vector<SymbolInfo> paramList)
+                       std::vector<SymbolInfo> paramList,
+                       std::string asmCode)
         :name{name},
          type{type},
          paramList{paramList},
          size{0},
          next{nullptr},
          defined{false},
-         asmCode{""}
+         asmCode{asmCode}
 {}
 
 SymbolInfo::SymbolInfo(std::string name,

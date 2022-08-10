@@ -86,9 +86,9 @@ bool ScopeTable::insert(std::string name, std::string type, std::string asmCode)
     return true;
 }
 
-bool ScopeTable::insert(std::string name, std::string type, std::vector<SymbolInfo> paramList)
+bool ScopeTable::insert(std::string name, std::string type, std::vector<SymbolInfo> paramList, std::string asmCode)
 {
-    SymbolInfo* symbolInfo = new SymbolInfo(name, type, paramList);
+    SymbolInfo* symbolInfo = new SymbolInfo(name, type, paramList, asmCode);
     unsigned int bucket = sdbmHash(name, size);
 
     SymbolInfo* current = hashTable[bucket];
