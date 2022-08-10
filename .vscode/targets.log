@@ -1,4 +1,6 @@
 make all --print-data-base --no-builtin-variables --no-builtin-rules --question
+make: *** No rule to make target 'all'.  Stop.
+
 # GNU Make 4.3
 # Built for x86_64-pc-linux-gnu
 # Copyright (C) 1988-2020 Free Software Foundation, Inc.
@@ -6,7 +8,7 @@ make all --print-data-base --no-builtin-variables --no-builtin-rules --question
 # This is free software: you are free to change and redistribute it.
 # There is NO WARRANTY, to the extent permitted by law.
 
-# Make data base, printed on Wed Aug 10 19:30:06 2022
+# Make data base, printed on Wed Aug 10 21:26:25 2022
 
 # Variables
 
@@ -95,7 +97,7 @@ MAKEFILE_LIST := makefile
 # automatic
 @F = $(notdir $@)
 # environment
-VSCODE_PID = 5247
+VSCODE_PID = 13624
 # environment
 XDG_SESSION_TYPE = wayland
 # automatic
@@ -233,9 +235,9 @@ LC_IDENTIFICATION = bn_BD
 
 # Directories
 
-# . (device 66307, inode 2494789): 18 files, no impossibilities.
+# . (device 66307, inode 2494789): 20 files, no impossibilities.
 
-# 18 files, no impossibilities in 1 directories.
+# 20 files, no impossibilities in 1 directories.
 
 # Implicit Rules
 
@@ -256,10 +258,26 @@ all:
 #  File does not exist.
 #  File has not been updated.
 
+run:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from 'makefile', line 27):
+	@./compiler.out input.txt
+	@echo "0"
+
+delete:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from 'makefile', line 31):
+	@rm *.out
+	@echo "0"
+
 # Not a target:
 makefile:
 #  Implicit rule search has been done.
-#  Last modified 2022-07-12 08:21:48.550678
+#  Last modified 2022-08-10 21:03:08.845247215
 #  File has been updated.
 #  Successfully updated.
 
@@ -274,6 +292,7 @@ create:
 	@echo "5"
 	@flex scanner.l
 	@echo "4"
+ 
 	@g++ -w -c -o l.o lex.yy.c
 	@echo "3"
 	@g++ -w -c -o a.o ScopeTableClass/SymbolInfo.cpp
@@ -284,25 +303,22 @@ create:
 	@rm *.o y.tab.c y.tab.h lex.yy.c
 	@echo "1"
 	@./compiler.out input.txt
-	@rm *.out
 	@echo "0"
 
 # files hash-table stats:
-# Load=5/1024=0%, Rehash=0, Collisions=0/15=0%
+# Load=7/1024=1%, Rehash=0, Collisions=0/17=0%
 # VPATH Search Paths
 
 # No 'vpath' search paths.
 
 # No general ('VPATH' variable) search path.
 
-# strcache buffers: 1 (0) / strings = 24 / storage = 280 B / avg = 11 B
-# current buf: size = 8162 B / used = 280 B / count = 24 / avg = 11 B
+# strcache buffers: 1 (0) / strings = 28 / storage = 331 B / avg = 11 B
+# current buf: size = 8162 B / used = 331 B / count = 28 / avg = 11 B
 
-# strcache performance: lookups = 29 / hit rate = 17%
+# strcache performance: lookups = 35 / hit rate = 20%
 # hash-table stats:
-# Load=24/8192=0%, Rehash=0, Collisions=0/29=0%
-# Finished Make data base on Wed Aug 10 19:30:06 2022
+# Load=28/8192=0%, Rehash=0, Collisions=0/35=0%
+# Finished Make data base on Wed Aug 10 21:26:25 2022
 
  
-make: *** No rule to make target 'all'.  Stop.
-

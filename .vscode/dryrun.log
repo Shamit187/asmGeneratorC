@@ -16,7 +16,6 @@ g++ -o compiler.out y.o l.o a.o b.o c.o -lfl
 rm *.o y.tab.c y.tab.h lex.yy.c
 echo "1"
 ./compiler.out input.txt
-rm *.out
 echo "0"
 make: Leaving directory '/home/shamit/CodeFiles/yacc_lex/asmGeneratorC'
  

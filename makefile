@@ -21,5 +21,13 @@ create:
 	@echo "1"
 
 	@./compiler.out input.txt
+	@echo "0"
+
+run:
+	@./compiler.out input.txt
+	@echo "0"
+
+delete:
 	@rm *.out
 	@echo "0"
+

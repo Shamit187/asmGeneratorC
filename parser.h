@@ -24,6 +24,7 @@ std::ofstream errorFile;
 std::ofstream asmFile;
 std::stack<int> offsetStack;
 int currentOffset = 0;
+int tempOffset = 0;
 
 std::ofstream formattedCode;
 
@@ -160,4 +161,11 @@ std::string arrayOffset(std::string asmCode, int index){
         returnString = "[" + asmCode + " + " + std::to_string(index) + "]";
     }
     return returnString;
+}
+
+std::string newTemp(){
+    static int tempNumber = 0;
+    
+    std::string temp = "__temp" + std::to_string(tempNumber++);
+    return temp;
 }

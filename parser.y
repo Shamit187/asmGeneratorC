@@ -1093,6 +1093,7 @@ variable : ID
 	//done
 	std::string codeText($1->getName());
 	std::string returnType = "VOID";
+	std::string asmCode = "";
 
 	SymbolInfo* closestScopeSymbol =
 	symbolTable.lookup($1->getName());
@@ -1104,18 +1105,24 @@ variable : ID
 			errorLog("Type mismatch, " + $1->getName() + " is an " + vartypeReturn(closestScopeSymbol->getType()));
 		}else{
 			returnType = typeReturn(closestScopeSymbol->getType());
+
+			//asm code
+			asmCode = closestScopeSymbol->getAsm();
 		}
 	}
 
 	logCode(codeText, "variable : ID");
-	$$ = new SymbolInfo(codeText, returnType);
+	$$ = new SymbolInfo(codeText, returnType, asmCode);
 }
 | ID LTHIRD expression RTHIRD 
 {
 	//done
+
+	//asm not sure... needs to check
 	std::string codeText($1->getName() + "[" 
 						+ $3->getName() + "]");
 	std::string returnType = "VOID";
+	std::string asmCode = "";
 	
 	SymbolInfo* closestScopeSymbol =
 	symbolTable.lookup($1->getName());
@@ -1132,12 +1139,34 @@ variable : ID
 				errorLog("Expression inside third brackets not an integer");
 			}else{
 				returnType = typeReturn(closestScopeSymbol->getType());
+
+				//asm code
+				std::string comment = "array[expression].. i hate this code..";
+
+				std::string compiledCode = "MOV AX, " + $3->getAsm() + "\n";
+				compiledCode += "MOV BX, BP\n";
+				std::vector<std::string> v = splitString(closestScopeSymbol->getAsm(), ' ');
+				compiledCode += "SUB BX, " + v[3] + "\n";
+				compiledCode += "SHL AX, 1\n";
+				compiledCode += "SUB BX, AX\n";
+				
+				//new temp()
+				currentOffset++;
+				asmCode = "[BP - " + std::to_string(currentOffset*2) + "]";
+				int temp = offsetStack.top(); offsetStack.pop();
+				offsetStack.push(temp + 1);
+
+				symbolTable.insert(newTemp(), "ID_INT", asmCode);
+				compiledCode += "SUB SP, 2\n";
+				
+				compiledCode += "MOV " + asmCode + "[BX]\n"; 
+				writeToAsm(compiledCode, comment, true);
 			}
 		}
 	}
 
 	logCode(codeText, "variable : ID LTHIRD expression RTHIRD");
-	$$ = new SymbolInfo(codeText, returnType);
+	$$ = new SymbolInfo(codeText, returnType, asmCode);
 }
 ;
 
@@ -1391,7 +1420,7 @@ factor : variable
 	//done
 	std::string codeText($1->getName());
 	logCode(codeText, "factor : variable");
-	$$ = new SymbolInfo(codeText, $1->getType());
+	$$ = new SymbolInfo(codeText, $1->getType(), $1->getAsm());
 }
 
 
@@ -1447,6 +1476,33 @@ factor : variable
 	}else{
 		$$ = new SymbolInfo(codeText, "VOID");
 	}
+
+	if(globalAvailability != nullptr){
+		std::vector<SymbolInfo> args = $3->getParamList();
+		std::string comment = "the function call for " + globalAvailability->getName() + " ^_^ \n";
+
+		std::string compiledCode = "";
+		for(int i = 0; i < args.size(); i++){
+			compiledCode += "PUSH " + args[i].getAsm() + "\n";
+		}
+		compiledCode += "CALL " + globalAvailability->getAsm() + "\n";
+		for(int i = 0; i < args.size(); i++){
+			compiledCode += "POP AX\n";
+		}
+
+		currentOffset++;
+		std::string asmCode = "[BP - " + std::to_string(currentOffset*2) + "]";
+		int temp = offsetStack.top(); offsetStack.pop();
+		offsetStack.push(temp + 1);
+
+		symbolTable.insert(newTemp(), "ID_INT", asmCode);
+		compiledCode += "MOV " + asmCode + ", DX";
+		writeToAsm(compiledCode, comment, true);
+
+		$$->setAsm(asmCode);
+	}
+
+
 	logCode(codeText, "factor : ID LPAREN argument_list RPAREN");
 }
 
