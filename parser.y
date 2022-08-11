@@ -1163,8 +1163,12 @@ variable : ID
 
 				std::string compiledCode = "MOV AX, " + $3->getAsm() + "\n";
 				compiledCode += "MOV BX, BP\n";
-				std::vector<std::string> v = splitString(closestScopeSymbol->getAsm(), ' ');
-				compiledCode += "SUB BX, " + v[3] + "\n";
+				// std::vector<std::string> v = splitString(closestScopeSymbol->getAsm(), ' ');
+				// std::cout << codeText << std::endl;
+				// for(int i = 0; i < v.size(); i++){
+				// 	std::cout << v[i] << std::endl;
+				// }
+				compiledCode += "SUB BX, " + getOffset(closestScopeSymbol->getAsm()) + "\n";
 				compiledCode += "SHL AX, 1\n";
 				compiledCode += "SUB BX, AX\n";
 				
@@ -1481,6 +1485,7 @@ unary_expression : ADDOP unary_expression
 	//done
 	std::string returnType("VOID");
 	std::string codeText("!" + $2->getName());
+	std::string asmCode;
 	if($2->getType() == "VOID"){
 		//errorLog("Invalid operation.");
 		//invalid operation
@@ -1495,18 +1500,32 @@ unary_expression : ADDOP unary_expression
 		std::string comment = codeText;
 		std::string label1 = newLabel();
 		std::string label2 = newLabel();
-		std::string compiledCode = "CMP " + $2->getAsm() + ", 0\n";
+
+		currentOffset++;
+		tempOffset++;
+		asmCode = "[BP - " + std::to_string(currentOffset*2) + "]";
+		int temp = offsetStack.top(); offsetStack.pop();
+		offsetStack.push(temp + 1);
+
+		//symbolTable.insert(newTemp(), "ID_INT", asmCode);
+
+		std::string compiledCode = "SUB SP, 2\n";
+		compiledCode+= 	"MOV AX, " + $2->getAsm() + "\n";
+		compiledCode+= 	"MOV " + asmCode  + ", AX\n";
+		compiledCode+= 	"MOV AX, 0000H\n";
+		compiledCode+= 	"MOV BX, 0001H\n";
+		compiledCode+= 	"CMP " + asmCode + ", AX\n";
 		compiledCode+=	"JE " + label1 + "\n";
-		compiledCode+=	"MOV " + $2->getAsm() + ", 0\n";
+		compiledCode+=	"MOV " + asmCode + ", AX\n";
 		compiledCode+=	"JMP " + label2 + "\n";
 		compiledCode+=	label1 + ":\n";  
-		compiledCode+=	"MOV " + $2->getAsm() + ", 1\n";
+		compiledCode+=	"MOV " + asmCode + ", BX\n";
 		compiledCode+=	label2 + ":\n";
 
 		writeToAsm(compiledCode, comment, true);
 	}
 	logCode(codeText, "unary_expression : NOT unary_expression");
-	$$ = new SymbolInfo(codeText, returnType);
+	$$ = new SymbolInfo(codeText, returnType, asmCode);
 }
 
 
