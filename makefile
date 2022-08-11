@@ -23,7 +23,7 @@ create:
 	@./compiler.out input.txt
 	@echo "0"
 
-run:
+compile:
 	@./compiler.out input.txt
 	@echo "0"
 

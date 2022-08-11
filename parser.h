@@ -169,3 +169,10 @@ std::string newTemp(){
     std::string temp = "__temp" + std::to_string(tempNumber++);
     return temp;
 }
+
+std::string newLabel(){
+    static int lebelNumber = 0;
+    
+    std::string temp = "__lebel" + std::to_string(lebelNumber++);
+    return temp;
+}

@@ -857,6 +857,15 @@ statements : statement
 	std::string codeText(indentGen() + $1->getName());
 	logCode(codeText, "statements : statement");
 	$$ = new SymbolInfo(codeText, "");
+
+	//asm code
+	currentOffset -= tempOffset;
+	int temp = offsetStack.top(); offsetStack.pop();
+	offsetStack.push(temp - tempOffset);
+	std::string comment = "removing temp vars of the expressions";
+	std::string compiledCode = "ADD SP, " + std::to_string(tempOffset * 2) + "\n";
+	tempOffset = 0;
+	writeToAsm(compiledCode, comment, true);
 }
 | statements statement 
 {
@@ -865,6 +874,15 @@ statements : statement
 						+$2->getName());
 	logCode(codeText, "statements : statements statement");
 	$$ = new SymbolInfo(codeText, "");
+
+	//asm code
+	currentOffset -= tempOffset;
+	int temp = offsetStack.top(); offsetStack.pop();
+	offsetStack.push(temp - tempOffset);
+	std::string comment = "removing temp vars of the expressions";
+	std::string compiledCode = "ADD SP, " + std::to_string(tempOffset * 2) + "\n";
+	tempOffset = 0;
+	writeToAsm(compiledCode, comment, true);
 }
 |UNRECOGNIZED
 {
@@ -1027,7 +1045,7 @@ compound_statement
 
 	//asm code
 	std::string comment = "printf(" + scopeId->getName() + ")";
-	std::string asmCode = "MOV AX," + scopeId->getAsm() + "\nCALL PRINT\n";
+	std::string asmCode = "MOV AX, " + scopeId->getAsm() + "\nCALL PRINT\n";
 	writeToAsm(asmCode, comment, true);
 }
 
@@ -1152,14 +1170,13 @@ variable : ID
 				
 				//new temp()
 				currentOffset++;
+				tempOffset++;
 				asmCode = "[BP - " + std::to_string(currentOffset*2) + "]";
 				int temp = offsetStack.top(); offsetStack.pop();
 				offsetStack.push(temp + 1);
 
-				symbolTable.insert(newTemp(), "ID_INT", asmCode);
-				compiledCode += "SUB SP, 2\n";
-				
-				compiledCode += "MOV " + asmCode + "[BX]\n"; 
+				//symbolTable.insert(newTemp(), "ID_INT", asmCode);
+				compiledCode += "PUSH [BX]\n"; 
 				writeToAsm(compiledCode, comment, true);
 			}
 		}
@@ -1178,7 +1195,7 @@ expression : logic_expression
 	//done
 	std::string codeText($1->getName());
 	logCode(codeText, "expression : logic_expression");
-	$$ = new SymbolInfo(codeText, $1->getType());
+	$$ = new SymbolInfo(codeText, $1->getType(), $1->getAsm());
 }
 
 
@@ -1205,6 +1222,15 @@ expression : logic_expression
 	}else{
 		//successful code
 		returnType = $1->getType();
+
+		//asm code
+		std::string comment =$1->getName() + "="
+							+$3->getName();
+		std::string compiledCode = "";
+		compiledCode += "MOV AX, " + $3->getAsm() + "\n";
+		compiledCode += "MOV " + $1->getAsm() + ", AX\n";
+		
+		writeToAsm(compiledCode, comment, true);
 	}
 	std::string codeText($1->getName() + "="
 						+$3->getName());
@@ -1221,7 +1247,7 @@ logic_expression : rel_expression
 	//done
 	std::string codeText($1->getName());
 	logCode(codeText, "logic_expression : rel_expression");
-	$$ = new SymbolInfo(codeText, $1->getType());
+	$$ = new SymbolInfo(codeText, $1->getType(), $1->getAsm());
 }
 
 
@@ -1255,7 +1281,7 @@ rel_expression : simple_expression
 	//done
 	std::string codeText($1->getName());
 	logCode(codeText, "rel_expression : simple_expression");
-	$$ = new SymbolInfo(codeText, $1->getType());
+	$$ = new SymbolInfo(codeText, $1->getType(), $1->getAsm());
 }
 
 
@@ -1292,13 +1318,14 @@ simple_expression : term
 	//done
 	std::string codeText($1->getName());
 	logCode(codeText, "simple_expression : term");
-	$$ = new SymbolInfo(codeText, $1->getType());	
+	$$ = new SymbolInfo(codeText, $1->getType(), $1->getAsm());	
 }
 
 
 | simple_expression ADDOP term 
 {
 	//done
+	std::string asmCode;
 	std::string returnType("VOID");
 	if($1->getType() == "VOID" || $3->getType() == "VOID"){
 		//invalid operation
@@ -1311,12 +1338,35 @@ simple_expression : term
 	}else{
 		//successful code
 		returnType = $1->getType();
+
+		//asm code
+		currentOffset++;
+		tempOffset++;
+		asmCode = "[BP - " + std::to_string(currentOffset*2) + "]";
+		int temp = offsetStack.top(); offsetStack.pop();
+		offsetStack.push(temp + 1);
+
+		//symbolTable.insert(newTemp(), "ID_INT", asmCode);
+
+		std::string comment =$1->getName() 
+							+$2->getName()
+							+$3->getName();
+		std::string compiledCode = "SUB SP, 2\n";
+		compiledCode += "MOV AX, " + $1->getAsm() + "\n";
+		if($2->getName() == "+")
+			compiledCode += "ADD AX, " + $3->getAsm() + "\n";
+		else
+			compiledCode += "SUB AX, " + $3->getAsm() + "\n";
+		compiledCode += "MOV " + asmCode + ", AX\n";
+
+		writeToAsm(compiledCode, comment, true);
+
 	}
 	std::string codeText($1->getName() 
 						+$2->getName()
 						+$3->getName());
 	logCode(codeText, "simple_expression : simple_expression ADDOP term");
-	$$ = new SymbolInfo(codeText, returnType);
+	$$ = new SymbolInfo(codeText, returnType, asmCode);
 }
 ;
 
@@ -1328,7 +1378,7 @@ term : unary_expression
 	//done
 	std::string codeText($1->getName());
 	logCode(codeText, "term : unary_expression");
-	$$ = new SymbolInfo(codeText, $1->getType());
+	$$ = new SymbolInfo(codeText, $1->getType(), $1->getAsm());
 }
 
 
@@ -1377,9 +1427,19 @@ unary_expression : ADDOP unary_expression
 	}else if($2->getType() == "VOID_FUNC"){
 		errorLog("Void function used in expression");
 		$2->setType("VOID");
+	}else{
+		//asm code
+		if($1->getName() == "-"){
+			std::string comment = codeText;
+			std::string compiledCode = "MOV  AX, " + $2->getAsm() + "\n";
+			compiledCode += "NEG AX\n";
+			compiledCode += "MOV " + $2->getAsm() + ", AX\n";
+
+			writeToAsm(compiledCode, comment, true);
+		}
 	}
 	logCode(codeText, "unary_expression : ADDOP unary_expression ");
-	$$ = new SymbolInfo(codeText, $2->getType());
+	$$ = new SymbolInfo(codeText, $2->getType(), $2->getAsm());
 }
 
 
@@ -1397,6 +1457,20 @@ unary_expression : ADDOP unary_expression
 		errorLog("Invalid datatypes for logical operation, needs to be integers.");
 	}else{
 		returnType = "INT";
+
+		//asm code
+		std::string comment = codeText;
+		std::string label1 = newLabel();
+		std::string label2 = newLabel();
+		std::string compiledCode = "CMP " + $2->getAsm() + ", 0\n";
+		compiledCode+=	"JE " + label1 + "\n";
+		compiledCode+=	"MOV " + $2->getAsm() + ", 0\n";
+		compiledCode+=	"JMP " + label2 + "\n";
+		compiledCode+=	label1 + ":\n";  
+		compiledCode+=	"MOV " + $2->getAsm() + ", 1\n";
+		compiledCode+=	label2 + ":\n";
+
+		writeToAsm(compiledCode, comment, true);
 	}
 	logCode(codeText, "unary_expression : NOT unary_expression");
 	$$ = new SymbolInfo(codeText, returnType);
@@ -1408,7 +1482,7 @@ unary_expression : ADDOP unary_expression
 	//done
 	std::string codeText($1->getName());
 	logCode(codeText, "unary_expression : factor");
-	$$ = new SymbolInfo(codeText, $1->getType());
+	$$ = new SymbolInfo(codeText, $1->getType(), $1->getAsm());
 }
 ;
 
@@ -1478,6 +1552,8 @@ factor : variable
 	}
 
 	if(globalAvailability != nullptr){
+
+		//asm code
 		std::vector<SymbolInfo> args = $3->getParamList();
 		std::string comment = "the function call for " + globalAvailability->getName() + " ^_^ \n";
 
@@ -1491,12 +1567,13 @@ factor : variable
 		}
 
 		currentOffset++;
+		tempOffset++;
 		std::string asmCode = "[BP - " + std::to_string(currentOffset*2) + "]";
 		int temp = offsetStack.top(); offsetStack.pop();
 		offsetStack.push(temp + 1);
 
-		symbolTable.insert(newTemp(), "ID_INT", asmCode);
-		compiledCode += "MOV " + asmCode + ", DX";
+		//symbolTable.insert(newTemp(), "ID_INT", asmCode);
+		compiledCode += "PUSH DX";
 		writeToAsm(compiledCode, comment, true);
 
 		$$->setAsm(asmCode);
@@ -1512,7 +1589,7 @@ factor : variable
 	//done
 	std::string codeText("(" + $2->getName() + ")");
 	logCode(codeText, "factor : LPAREN expression RPAREN");
-	$$ = new SymbolInfo(codeText, $2->getType());
+	$$ = new SymbolInfo(codeText, $2->getType(), $2->getAsm());
 }
 
 
@@ -1521,7 +1598,19 @@ factor : variable
 	//done
 	std::string codeText($1->getName());
 	logCode(codeText, "factor : CONST_INT");
-	$$ = new SymbolInfo(codeText, "INT");
+
+	//asmCode
+	currentOffset++;
+	tempOffset++;
+	std::string asmCode = "[BP - " + std::to_string(currentOffset*2) + "]";
+	int temp = offsetStack.top(); offsetStack.pop();
+	offsetStack.push(temp + 1);
+
+	//symbolTable.insert(newTemp(), "ID_INT", asmCode);
+	std::string compiledCode = "PUSH " + $1->getName() + "\n";
+	writeToAsm(compiledCode, "CONST_INT " + $1->getName(), true);
+
+	$$ = new SymbolInfo(codeText, "INT", asmCode);
 }
 
 
@@ -1530,7 +1619,7 @@ factor : variable
 	//done
 	std::string codeText($1->getName());
 	logCode(codeText, "factor : CONST_FLOAT");
-	$$ = new SymbolInfo(codeText, "FLOAT");
+	$$ = new SymbolInfo(codeText, "FLOAT", $1->getName());
 }
 
 
@@ -1543,9 +1632,16 @@ factor : variable
 		errorLog("Invalid operation.");
 	}else{
 		returnType = $1->getType();
+
+		//asm code
+		std::string comment = codeText;
+		std::string compiledCode = "ADD " + $1->getAsm() + ", 1\n";
+
+		writeToAsm(compiledCode, comment, true);
+
 	}
 	logCode(codeText, "factor : variable INCOP");
-	$$ = new SymbolInfo(codeText, returnType);
+	$$ = new SymbolInfo(codeText, returnType, $1->getAsm());
 }
 
 
@@ -1558,6 +1654,12 @@ factor : variable
 		errorLog("Invalid operation.");
 	}else{
 		returnType = $1->getType();
+
+		//asm code
+		std::string comment = codeText;
+		std::string compiledCode = "SUB " + $1->getAsm() + ", 1\n";
+
+		writeToAsm(compiledCode, comment, true);
 	}
 	logCode(codeText, "factor : variable DECOP");
 	$$ = new SymbolInfo(codeText, returnType);
@@ -1591,7 +1693,7 @@ argument_list :	arguments
 
 arguments : arguments COMMA logic_expression 
 {
-	$1->pushParam(SymbolInfo("", $3->getType()));
+	$1->pushParam(SymbolInfo("", $3->getType(), $3->getAsm()));
 	std::string codeText($1->getName()
 						+ ","
 						+$3->getName());
@@ -1607,7 +1709,7 @@ arguments : arguments COMMA logic_expression
 	std::vector<SymbolInfo> paramList;
 	std::string codeText($1->getName());
 
-	paramList.push_back(SymbolInfo("", $1->getType()));
+	paramList.push_back(SymbolInfo("", $1->getType(), $1->getAsm()));
 	logCode(codeText, "arguments : logic_expression");
 	$$ = new SymbolInfo(codeText, "", paramList, "");
 }
