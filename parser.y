@@ -1386,6 +1386,7 @@ term : unary_expression
 {
 	//done
 	std::string returnType("VOID");
+	std::string asmCode;
 	if($1->getType() == "VOID" || $3->getType() == "VOID"){
 		//invalid operation
 		//errorLog("Invalid operation.");
@@ -1405,12 +1406,44 @@ term : unary_expression
 	}else{
 		//successful code
 		returnType = $1->getType();
+
+		//asm code
+		currentOffset++;
+		tempOffset++;
+		asmCode = "[BP - " + std::to_string(currentOffset*2) + "]";
+		int temp = offsetStack.top(); offsetStack.pop();
+		offsetStack.push(temp + 1);
+
+		//symbolTable.insert(newTemp(), "ID_INT", asmCode);
+		std::string comment =$1->getName() 
+							+$2->getName()
+							+$3->getName();
+		std::string compiledCode = "SUB SP, 2\n";
+		compiledCode += "MOV AX, " + $1->getAsm() + "\n";
+		compiledCode += "MOV BX, " + $3->getAsm() + "\n";
+		if($2->getName() == "*"){
+			//multiplication
+			compiledCode += "MUL BX\n";
+			compiledCode += "MOV " + asmCode + ", AX\n";	
+		}else if($2->getName() == "/"){
+			//division
+			compiledCode += "XOR DX, DX\n";
+			compiledCode += "DIV BX\n";
+			compiledCode += "MOV " + asmCode + ", AX\n";
+		}else{
+			//modulus
+			compiledCode += "XOR DX, DX\n";
+			compiledCode += "DIV BX\n";
+			compiledCode += "MOV " + asmCode + ", DX\n";
+		}
+		writeToAsm(compiledCode, comment, true);
+
 	}
 	std::string codeText($1->getName()
 						+$2->getName()
 						+$3->getName());
 	logCode(codeText, "term : term MULOP unary_expression");
-	$$ = new SymbolInfo(codeText, returnType);
+	$$ = new SymbolInfo(codeText, returnType, asmCode);
 }
 ;
 
