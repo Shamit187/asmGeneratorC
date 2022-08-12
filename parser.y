@@ -1135,8 +1135,6 @@ variable : ID
 | ID LTHIRD expression RTHIRD 
 {
 	//done
-
-	//asm not sure... needs to check
 	std::string codeText($1->getName() + "[" 
 						+ $3->getName() + "]");
 	std::string returnType = "VOID";
@@ -1269,14 +1267,46 @@ logic_expression : rel_expression
 }
 
 
-| rel_expression LOGICOP rel_expression 
+| rel_expression LOGICOP
+{
+	std::string compiledCode = "";
+	std::string label =  newLabel(); //pass via logic op address
+	std::string asmCode; //pass via logic op asm code
+
+	currentOffset++;
+	tempOffset++;
+	asmCode = "[BP - " + std::to_string(currentOffset*2) + "]";
+	int temp = offsetStack.top(); offsetStack.pop();
+	offsetStack.push(temp + 1);
+
+	compiledCode += "SUB SP, 2\n";
+
+	//asm code
+	if($2->getName() == "&&"){
+		compiledCode += "MOV AX, " + $1->getAsm() + "\n";
+		compiledCode += "MOV " + asmCode + ", AX\n"; 
+		compiledCode += "CMP " + $1->getAsm() + ", 0\n";
+		compiledCode += "JE " + label + "\n";
+	}else{
+		compiledCode += "MOV AX, " + $1->getAsm() + "\n";
+		compiledCode += "MOV " + asmCode + ", AX\n"; 
+		compiledCode += "CMP " + $1->getAsm() + ", 0\n";
+		compiledCode += "JNE " + label + "\n";
+	}
+
+	writeToAsm(compiledCode, "short circuit start: " + $1->getName() + " " + $2->getName(), true);
+
+	$2->setAsm(asmCode);
+	$2->setAddress(label);
+
+} rel_expression 
 {
 	//done
 	std::string returnType("VOID");
-	if($1->getType() != "INT" || $3->getType() != "INT"){
+	if($1->getType() != "INT" || $4->getType() != "INT"){
 		//invalid operation
 		//errorLog("Invalid datatypes for logical operation, needs to be integers.");
-	}else if($1->getType() == "VOID_FUNC" || $3->getType() == "VOID_FUNC"){
+	}else if($1->getType() == "VOID_FUNC" || $4->getType() == "VOID_FUNC"){
 		errorLog("Void function used in expression");
 	}else{
 		//successful code
@@ -1284,9 +1314,19 @@ logic_expression : rel_expression
 	}
 	std::string codeText($1->getName()
 						+$2->getName()
-						+$3->getName());
+						+$4->getName());
+
+
+	//asm code
+	std::string compiledCode = "";
+	compiledCode += "MOV AX, " + $4->getAsm() + "\n";
+	compiledCode += "MOV " + $2->getAsm() + ", AX\n"; 
+	compiledCode += $2->getAddress() + ":\n";
+
+	writeToAsm(compiledCode, "short circuit end: " + $2->getName() + " " + $4->getName(), true);
+
 	logCode(codeText, "logic_expression : rel_expression LOGICOP rel_expression");
-	$$ = new SymbolInfo(codeText, returnType);
+	$$ = new SymbolInfo(codeText, returnType, $2->getAsm());
 
 }
 ;
