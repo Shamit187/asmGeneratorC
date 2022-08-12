@@ -1285,12 +1285,12 @@ logic_expression : rel_expression
 	if($2->getName() == "&&"){
 		compiledCode += "MOV AX, " + $1->getAsm() + "\n";
 		compiledCode += "MOV " + asmCode + ", AX\n"; 
-		compiledCode += "CMP " + $1->getAsm() + ", 0\n";
+		compiledCode += "CMP " + $1->getAsm() + ", 0000H\n";
 		compiledCode += "JE " + label + "\n";
 	}else{
 		compiledCode += "MOV AX, " + $1->getAsm() + "\n";
 		compiledCode += "MOV " + asmCode + ", AX\n"; 
-		compiledCode += "CMP " + $1->getAsm() + ", 0\n";
+		compiledCode += "CMP " + $1->getAsm() + ", 0000H\n";
 		compiledCode += "JNE " + label + "\n";
 	}
 
@@ -1347,6 +1347,7 @@ rel_expression : simple_expression
 {
 	//done
 	std::string returnType("VOID");
+	std::string asmCode;
 	if($1->getType() == "VOID" || $3->getType() == "VOID"){
 		//invalid operation
 		//errorLog("Invalid operation");
@@ -1359,12 +1360,51 @@ rel_expression : simple_expression
 		//successful code 
 		//result of relop is always either 0 or 1, integer
 		returnType = "INT";
+
+		//asm code
+		std::string comment($1->getName()+$2->getName()+$3->getName());
+		std::string compiledCode = "";
+
+		currentOffset++;
+		tempOffset++;
+		asmCode = "[BP - " + std::to_string(currentOffset*2) + "]";
+		int temp = offsetStack.top(); offsetStack.pop();
+		offsetStack.push(temp + 1);
+
+		compiledCode += "SUB SP, 2\n";
+		compiledCode += "MOV AX, " + $1->getAsm() + "\n";
+		compiledCode += "MOV BX, " + $3->getAsm() + "\n";
+		compiledCode += "CMP AX, BX\n";
+
+		std::string label1 = newLabel();
+		std::string label2 = newLabel();
+
+		if($2->getName() == ">"){
+			compiledCode += "JG " + label1 + "\n";
+		}else if($2->getName() == "<"){
+			compiledCode += "JL " + label1 + "\n";
+		}else if($2->getName() == ">="){
+			compiledCode += "JGE " + label1 + "\n";
+		}else if($2->getName() == "<="){
+			compiledCode += "JLE " + label1 + "\n";
+		}else{
+			compiledCode += "JE " + label1 + "\n";
+		}
+
+		compiledCode += "MOV " + asmCode + ", 0000H\n";
+		compiledCode += "JMP " + label2 + "\n";
+		compiledCode += label1 + ":\n";
+		compiledCode += "MOV " + asmCode + ", 0001H\n";
+		compiledCode += label2 + ":\n";
+
+		writeToAsm(compiledCode, comment, true);
+		
 	}
 	std::string codeText($1->getName()
 						+$2->getName()
 						+$3->getName());
 	logCode(codeText, "rel_expression : simple_expression RELOP simple_expression");
-	$$ = new SymbolInfo(codeText, returnType);
+	$$ = new SymbolInfo(codeText, returnType, asmCode);
 }
 ;
 
@@ -1713,7 +1753,8 @@ factor : variable
 	offsetStack.push(temp + 1);
 
 	//symbolTable.insert(newTemp(), "ID_INT", asmCode);
-	std::string compiledCode = "PUSH " + $1->getName() + "\n";
+	std::string compiledCode = "MOV AX, " + $1->getName() + "\n";
+	compiledCode += "PUSH AX\n"; 
 	writeToAsm(compiledCode, "CONST_INT " + $1->getName(), true);
 
 	$$ = new SymbolInfo(codeText, "INT", asmCode);
