@@ -1140,7 +1140,8 @@ variable : ID
 	std::string codeText($1->getName() + "[" 
 						+ $3->getName() + "]");
 	std::string returnType = "VOID";
-	std::string asmCode = "";
+	std::string asmCode;
+	std::string address;
 	
 	SymbolInfo* closestScopeSymbol =
 	symbolTable.lookup($1->getName());
@@ -1163,11 +1164,6 @@ variable : ID
 
 				std::string compiledCode = "MOV AX, " + $3->getAsm() + "\n";
 				compiledCode += "MOV BX, BP\n";
-				// std::vector<std::string> v = splitString(closestScopeSymbol->getAsm(), ' ');
-				// std::cout << codeText << std::endl;
-				// for(int i = 0; i < v.size(); i++){
-				// 	std::cout << v[i] << std::endl;
-				// }
 				compiledCode += "SUB BX, " + getOffset(closestScopeSymbol->getAsm()) + "\n";
 				compiledCode += "SHL AX, 1\n";
 				compiledCode += "SUB BX, AX\n";
@@ -1180,7 +1176,18 @@ variable : ID
 				offsetStack.push(temp + 1);
 
 				//symbolTable.insert(newTemp(), "ID_INT", asmCode);
-				compiledCode += "PUSH [BX]\n"; 
+				compiledCode += "PUSH [BX]\n";
+
+				//new Temp()
+				currentOffset++;
+				tempOffset++;
+				address = "[BP - " + std::to_string(currentOffset*2) + "]";
+				temp = offsetStack.top(); offsetStack.pop();
+				offsetStack.push(temp + 1);
+
+				//symbolTable.insert(newTemp(), "ID_INT", asmCode);
+				compiledCode += "PUSH BX\n";
+
 				writeToAsm(compiledCode, comment, true);
 			}
 		}
@@ -1188,6 +1195,7 @@ variable : ID
 
 	logCode(codeText, "variable : ID LTHIRD expression RTHIRD");
 	$$ = new SymbolInfo(codeText, returnType, asmCode);
+	$$->setAddress(address);
 }
 ;
 
@@ -1232,7 +1240,13 @@ expression : logic_expression
 							+$3->getName();
 		std::string compiledCode = "";
 		compiledCode += "MOV AX, " + $3->getAsm() + "\n";
-		compiledCode += "MOV " + $1->getAsm() + ", AX\n";
+
+		if($1->hasAddress()){
+			compiledCode += "MOV " + $1->getAddress() + ", BX\n";
+			compiledCode += "MOV [BX], AX\n";
+		}else{
+			compiledCode += "MOV " + $1->getAsm() + ", AX\n";
+		}
 		
 		writeToAsm(compiledCode, comment, true);
 	}

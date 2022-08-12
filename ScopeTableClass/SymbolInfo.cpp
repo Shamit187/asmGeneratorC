@@ -8,7 +8,8 @@ SymbolInfo::SymbolInfo(std::string name,
          size{0},
          next{nullptr},
          defined{false},
-         asmCode{""}
+         asmCode{""},
+         addressAvailable{false}
 {}
 
 SymbolInfo::SymbolInfo(std::string name,
@@ -19,7 +20,8 @@ SymbolInfo::SymbolInfo(std::string name,
          size{0},
          next{nullptr},
          defined{false},
-         asmCode{asmCode}
+         asmCode{asmCode},
+         addressAvailable{false}
 {}
 
 SymbolInfo::SymbolInfo(std::string name,
@@ -32,7 +34,8 @@ SymbolInfo::SymbolInfo(std::string name,
          size{0},
          next{nullptr},
          defined{false},
-         asmCode{asmCode}
+         asmCode{asmCode},
+         addressAvailable{false}
 {}
 
 SymbolInfo::SymbolInfo(std::string name,
@@ -44,7 +47,8 @@ SymbolInfo::SymbolInfo(std::string name,
          size{size},
          next{nullptr},
          defined{false},
-         asmCode{asmCode}
+         asmCode{asmCode},
+         addressAvailable{false}
 {}
 
 SymbolInfo::~SymbolInfo()
@@ -71,6 +75,12 @@ void SymbolInfo::setNext(SymbolInfo* newNext){this->next = newNext;}
 void SymbolInfo::pushParam(SymbolInfo symbolInfo){(this->paramList).push_back(symbolInfo);}
 
 void SymbolInfo::setAsm(std::string asmCode){this->asmCode = asmCode;}
+
+void SymbolInfo::setAddress(std::string address){this->addressAvailable = true; this->address = address;}
+
+bool SymbolInfo::hasAddress(){return addressAvailable;}
+
+std::string SymbolInfo::getAddress(){return address;}
 
 std::ostream& operator<<(std::ostream& os, const SymbolInfo& obj){
     os << "< " << obj.name << " : " << obj.type << " >";

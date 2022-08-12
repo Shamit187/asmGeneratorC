@@ -11,6 +11,10 @@ private:
     std::string asmCode;
     SymbolInfo *next;
 
+    //array addressing
+    bool addressAvailable;
+    std::string address;
+
     std::vector<SymbolInfo> paramList;
     unsigned size;
 
@@ -42,6 +46,11 @@ public:
     void setNext(SymbolInfo* newNext);
     void pushParam(SymbolInfo symbolInfo);
     void setAsm(std::string asmCode);
+
+    //array addressing
+    void setAddress(std::string address);
+    bool hasAddress();
+    std::string getAddress();
 
     //util function
     std::string toString();

@@ -8,7 +8,7 @@ make: *** No rule to make target 'all'.  Stop.
 # This is free software: you are free to change and redistribute it.
 # There is NO WARRANTY, to the extent permitted by law.
 
-# Make data base, printed on Thu Aug 11 22:38:28 2022
+# Make data base, printed on Fri Aug 12 10:44:29 2022
 
 # Variables
 
@@ -59,7 +59,7 @@ VSCODE_CODE_CACHE_PATH = /home/shamit/.config/Code/CachedData/da76f93349a72022ca
 # environment
 LANG = C
 # environment
-XAUTHORITY = /run/user/1000/.mutter-Xwaylandauth.ZG2XQ1
+XAUTHORITY = /run/user/1000/.mutter-Xwaylandauth.IAXSQ1
 # default
 .LOADED := 
 # default
@@ -95,13 +95,13 @@ MAKEFILE_LIST := makefile
 # automatic
 @F = $(notdir $@)
 # environment
-VSCODE_PID = 2653
+VSCODE_PID = 2719
 # environment
 XDG_SESSION_TYPE = wayland
 # automatic
 ?D = $(patsubst %/,%,$(dir $?))
 # environment
-SESSION_MANAGER = local/shamit-ZenBook-UX425EA-UX425EA:@/tmp/.ICE-unix/1994,unix/shamit-ZenBook-UX425EA-UX425EA:/tmp/.ICE-unix/1994
+SESSION_MANAGER = local/shamit-ZenBook-UX425EA-UX425EA:@/tmp/.ICE-unix/1816,unix/shamit-ZenBook-UX425EA-UX425EA:/tmp/.ICE-unix/1816
 # automatic
 *F = $(notdir $*)
 # environment
@@ -143,7 +143,7 @@ LC_MONETARY = bn_BD
 # environment
 LC_TIME = bn_BD
 # environment
-INVOCATION_ID = 33dc8c56f8694bc891a0489795fd1208
+INVOCATION_ID = 0340d9f2d48c4e988d7e9f83207703f8
 # environment
 USERNAME = shamit
 # environment
@@ -173,7 +173,7 @@ GIO_LAUNCHED_DESKTOP_FILE = /usr/share/applications/code.desktop
 # makefile
 .DEFAULT_GOAL := create
 # environment
-SYSTEMD_EXEC_PID = 2018
+SYSTEMD_EXEC_PID = 1835
 # environment
 DISPLAY = :0
 # environment
@@ -183,11 +183,11 @@ GTK_MODULES = gail:atk-bridge
 # default
 MAKE_VERSION := 4.3
 # environment
-MANAGERPID = 1819
+MANAGERPID = 1669
 # environment
 LC_MEASUREMENT = bn_BD
 # environment
-GIO_LAUNCHED_DESKTOP_FILE_PID = 2653
+GIO_LAUNCHED_DESKTOP_FILE_PID = 2719
 # environment
 _ = /usr/share/code/code
 # environment
@@ -197,7 +197,7 @@ XDG_RUNTIME_DIR = /run/user/1000
 # environment
 NVM_CD_FLAGS = 
 # environment
-JOURNAL_STREAM = 8:34313
+JOURNAL_STREAM = 8:37110
 # environment
 XDG_SESSION_CLASS = user
 # environment
@@ -302,6 +302,7 @@ create:
 	@rm *.o y.tab.c y.tab.h lex.yy.c
 	@echo "1"
 	@./compiler.out input.txt
+ 
 	@echo "0"
 
 # files hash-table stats:
@@ -318,6 +319,6 @@ create:
 # strcache performance: lookups = 35 / hit rate = 20%
 # hash-table stats:
 # Load=28/8192=0%, Rehash=0, Collisions=0/35=0%
-# Finished Make data base on Thu Aug 11 22:38:28 2022
+# Finished Make data base on Fri Aug 12 10:44:30 2022
 
  
