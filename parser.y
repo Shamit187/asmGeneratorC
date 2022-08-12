@@ -364,7 +364,7 @@ compound_statement
 		comment = "main function ending";
 		writeToAsm(convertedCode, comment, false);
 	}else{
-		std::string convertedCode = "RET\n" + currentAsmFunction + " EDNP\n";
+		std::string convertedCode = "RET\n" + currentAsmFunction + " ENDP\n";
 		std::string comment = currentFunction + " function ending";
 		writeToAsm(convertedCode, comment, false);
 	}
@@ -503,7 +503,7 @@ compound_statement
 		comment = "main function ending";
 		writeToAsm(convertedCode, comment, false);
 	}else{
-		std::string convertedCode = "RET\n" + currentAsmFunction + " EDNP\n";
+		std::string convertedCode = "RET\n" + currentAsmFunction + " ENDP\n";
 		std::string comment = currentFunction + " function ending";
 		writeToAsm(convertedCode, comment, false);
 	}

@@ -181,6 +181,6 @@ std::string getOffset(std::string asmCode){
     std::vector<std::string>v = splitString(asmCode, ' ');
     std::string returnString = v[2];
     returnString.pop_back();
-    std::cout << asmCode << " : " << returnString << std::endl;
+    // std::cout << asmCode << " : " << returnString << std::endl;
     return returnString;
 }
