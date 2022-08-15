@@ -169,6 +169,13 @@ std::string newLabel(){
     return temp;
 }
 
+std::string newLabel(std::string type_of_label){
+    static int lebelNumber = 0;
+    
+    std::string temp = "__lebel_" + type_of_label + std::to_string(lebelNumber++);
+    return temp;
+}
+
 std::string getOffset(std::string asmCode){
     std::vector<std::string>v = splitString(asmCode, ' ');
     std::string returnString = v[2];

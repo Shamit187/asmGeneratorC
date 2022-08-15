@@ -94,14 +94,14 @@ EXPFLOAT {INTFLOAT}{EXPONENT}
 
 
 "if" {keywordTokenizer(yytext);return IF;}
-"for" {keywordTokenizer(yytext);return FOR;}
+"for" {keywordTokenizer(yytext);yylval.symbolInfo = (YYSTYPE) new SymbolInfo(yytext, "FOR");return FOR;}
 "int" {keywordTokenizer(yytext);return INT;}
 "float" {keywordTokenizer(yytext);return FLOAT;}
 "void"  {keywordTokenizer(yytext);return VOID;}
 "else" {keywordTokenizer(yytext);return ELSE;}
-"while" {keywordTokenizer(yytext);return WHILE;}
+"while" {keywordTokenizer(yytext);yylval.symbolInfo = (YYSTYPE) new SymbolInfo(yytext, "WHILE");return WHILE;}
 "return" {keywordTokenizer(yytext);return RETURN;}
-"printf" {keywordTokenizer(yytext);return PRINTLN;}
+"println" {keywordTokenizer(yytext);return PRINTLN;}
 
 {LETTER_}({LETTER_}|{DIGIT})* {identifierTokenizer(yytext);yylval.symbolInfo = (YYSTYPE) new SymbolInfo(yytext, "ID");return ID;}
 

@@ -8,7 +8,8 @@
 	SymbolInfo* symbolInfo;
 }
 
-%token RETURN VOID FLOAT INT WHILE FOR IF ELSE INCOP DECOP ASSIGNOP NOT LPAREN RPAREN LCURL RCURL LTHIRD RTHIRD COMMA SEMICOLON PRINTLN UNRECOGNIZED
+%token RETURN VOID FLOAT INT IF ELSE INCOP DECOP ASSIGNOP NOT LPAREN RPAREN LCURL RCURL LTHIRD RTHIRD COMMA SEMICOLON PRINTLN UNRECOGNIZED
+%token <symbolInfo> WHILE FOR
 
 %token <symbolInfo> ID CONST_INT CONST_FLOAT ADDOP MULOP RELOP LOGICOP
 
@@ -925,17 +926,61 @@ compound_statement
 	logCode(codeText, "statement : compound_statement");
 	$$ = new SymbolInfo(codeText, "");
 }
-| FOR LPAREN expression_statement {} expression_statement {} expression {} RPAREN statement 
+| FOR LPAREN expression_statement //3
+{
+	std::string label = newLabel("forLoopStart_");
+	std::string comment = "for loop start";
+	std::string compiledCode = label + ":\n";
+
+	writeToAsm(compiledCode, comment, true);
+
+	$1->setAsm(label);
+} 
+expression_statement //5
+{
+	std::string label1 = newLabel("forLoopEnd_");
+	std::string label2 = newLabel("forLoopStatement_");
+	std::string label3 = newLabel("forLoopChange_");
+
+	std::string comment = "looping condition check";
+	std::string compiledCode = "";
+
+	compiledCode += "XOR AX, AX\n";
+	compiledCode += "CMP AX, " + $5->getAsm() + "\n";
+	compiledCode += "JE " + label1 + "\n";
+	compiledCode += "JMP " + label2 + "\n";
+	compiledCode += label3 + ":\n";
+
+	writeToAsm(compiledCode, comment, true);
+
+	$3->setAddress(label1);
+	$5->setAddress(label2);
+	$1->setAddress(label3); 	
+} 
+expression //7
+{
+	std::string comment = "looping variable change";
+	std::string compiledCode = "";
+
+	compiledCode += "JMP " + $1->getAsm() + "\n";
+	compiledCode += $5->getAddress() + ":\n";
+	
+	writeToAsm(compiledCode, comment, true);
+} 
+RPAREN statement 
 {
 	//done
-	
-	std::string codeText("for ("
-						+$3->getName()
-						+$5->getName()
-						+$7->getName() + ")"
-						+$10->getName() + "\n");
+	std::string codeText("for (" +$3->getName() +$5->getName() +$7->getName() + ")" +$10->getName() + "\n");
 	logCode(codeText, "statements : FOR LPAREN expression_statement expression_statement expression RPAREN statement");
 	$$ = new SymbolInfo(codeText, "");
+
+	//asm code
+	std::string comment = "looping statement finished";
+	std::string compiledCode = "";
+	compiledCode += "JMP " + $1->getAddress() + "\n";
+	compiledCode += $3->getAddress() + ":\n";
+
+	writeToAsm(compiledCode, comment, true);
 }
 | if_declaration %prec LOWER_THAN_ELSE 
 {
@@ -959,16 +1004,42 @@ compound_statement
 	logCode(codeText, "statements : IF LPAREN expression RPAREN statement ELSE statement");
 	$$ = new SymbolInfo(codeText, "");
 }
-| WHILE LPAREN expression RPAREN statement 
+| WHILE 
+{
+	std::string comment = "while loop start";
+	std::string label = newLabel("while_start");
+	std::string compiledCode = label + ":\n";
+
+	writeToAsm(compiledCode, comment, true);
+	$1->setAddress(label);
+}
+LPAREN expression RPAREN 
+{
+	//asm code
+	removeTemp();
+	std::string comment = "evaluating while expression";
+	std::string compiledCode = "";
+	std::string label = newLabel("while_end");
+	compiledCode = "MOV AX, 0\n";
+	compiledCode += "CMP " + $4->getAsm() + ", AX\n";
+	compiledCode += "JE " + label + "\n";
+
+	writeToAsm(compiledCode, comment, true);
+	$4->setAddress(label);
+}
+statement 
 {
 	//done
-
-	std::string codeText("while ("
-						+$3->getName()
-						+")\n"
-						+$5->getName() + "\n");
+	std::string codeText("while ("+$4->getName()+")\n"+$7->getName() + "\n");
 	logCode(codeText, "statements : WHILE LPAREN expression RPAREN statement");
 	$$ = new SymbolInfo(codeText, "");
+
+	std::string comment = "ending while loop";
+	std::string compiledCode = "";
+	compiledCode += "JMP " + $1->getAddress() + "\n";
+	compiledCode += $4->getAddress() + ":\n";
+
+	writeToAsm(compiledCode, comment, true);
 }
 | PRINTLN LPAREN expression RPAREN SEMICOLON 
 {
@@ -1057,7 +1128,7 @@ expression_statement: SEMICOLON
 	//done
 	std::string codeText($1->getName() + ";");
 	logCode(codeText, "expression_statement : expression SEMICOLON");
-	$$ = new SymbolInfo(codeText, $1->getType());
+	$$ = new SymbolInfo(codeText, $1->getType(), $1->getAsm());
 
 	removeTemp();
 };
@@ -1643,8 +1714,9 @@ factor : variable
 		std::string compiledCode = "INC " + $1->getAsm() + "\n";
 
 		if($1->hasAddress()){ //if this is an array, also increase the data on the real address too
-			compiledCode += "MOV AX, " + $1->getAddress() + "\n";
-			compiledCode += "INC [AX]\n"; 
+			compiledCode += "MOV SI, " + $1->getAddress() + "\n";
+			compiledCode += "MOV AX, " + $1->getAsm() + "\n";
+			compiledCode += "MOV [SI], AX\n"; 
 		}
 
 		writeToAsm(compiledCode, comment, true);
@@ -1668,8 +1740,9 @@ factor : variable
 		std::string compiledCode = "DEC " + $1->getAsm() + "\n";
 
 		if($1->hasAddress()){ //if this is an array, also increase the data on the real address too
-			compiledCode += "MOV AX, " + $1->getAddress() + "\n";
-			compiledCode += "DEC [AX]\n"; 
+			compiledCode += "MOV SI, " + $1->getAddress() + "\n";
+			compiledCode += "MOV AX, " + $1->getAsm() + "\n";
+			compiledCode += "MOV [SI], AX\n";  
 		}
 
 		writeToAsm(compiledCode, comment, true);
