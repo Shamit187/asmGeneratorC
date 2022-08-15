@@ -20,14 +20,15 @@ create:
 	@rm *.o y.tab.c y.tab.h lex.yy.c
 	@echo "1"
 
-	@./compiler.out input.txt
+	@./compiler.out sampleInput/input.txt
 	@echo "0"
 
 compile:
-	@./compiler.out input.txt
+	@./compiler.out $(i)
 	@echo "0"
 
 delete:
 	@rm *.out
 	@echo "0"
+
 

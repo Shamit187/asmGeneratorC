@@ -1,8 +1,5 @@
-/1805055_lex_log.txt
-/1805055_lex_token.txt
-/1805055_yacc_error.txt
-/1805055_yacc_log.txt
-/1805055_asm_code.asm
-/1805055_formatted_code.txt
+/logs
+/generatedCode
+/sampleInput
 /input.txt
 /compiler.out

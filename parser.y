@@ -34,6 +34,8 @@ start : program
 	$$ = new SymbolInfo(codeText, "");
 	formattedCode << codeText << std::endl;
 	delete $1;
+
+	writeToAsm(" ", "code finised", false);
 };
 
 program : program unit 
@@ -328,9 +330,6 @@ func_definition : type_specifier ID LPAREN parameter_list RPAREN
 } 
 compound_statement 
 {
-	if(!functionHasReturned && currentReturnType != "VOID"){
-		errorLog("Function didn't return any value " + $2->getName());
-	}
 
 	//scope end
 	yacclogfile << "Scope #" << symbolTable.getCurrentScopeID() << " Exited" << std::endl;
@@ -353,12 +352,12 @@ compound_statement
 		std::string convertedCode = "__main_return: \n";
 		writeToAsm(convertedCode, comment, true);
 
-		comment = "removing all variable in the scope";
-		convertedCode = "MOV SP, BP\n";
+		comment = "removing all variable in the scope and storing the return value";
+		convertedCode = "MOV SP, BP\nPUSH DX\n";
 		writeToAsm(convertedCode, comment, true);
 
 		comment = "stack movement for recursive calling, [if return available then it is in DX]";
-		convertedCode = "POP BP\n";
+		convertedCode = "MOV SP, BP\nPOP BP\n";
 		writeToAsm(convertedCode, comment, true);
 
 		comment = "interrupt to return to operator";
@@ -375,12 +374,12 @@ compound_statement
 		std::string convertedCode = "__" + currentAsmFunction + "_return:\n";
 		writeToAsm(convertedCode, comment, true);
 
-		comment = "removing all variable in the scope";
-		convertedCode = "MOV SP, BP\n";
+		comment = "removing all variable in the scope and storing the return value";
+		convertedCode = "MOV SP, BP\nPUSH DX\n";
 		writeToAsm(convertedCode, comment, true);
 
 		comment = "stack movement for recursive calling, [if return available then it is in DX]";
-		convertedCode = "POP BP\n";
+		convertedCode = "MOV SP, BP\nPOP BP\n";
 		convertedCode += "RET " + std::to_string(2 * ($4->getParamList()).size()) + "\n";
 		writeToAsm(convertedCode, comment, true);
 
@@ -484,10 +483,6 @@ compound_statement
 } 
 compound_statement 
 {
-	if(!functionHasReturned && currentReturnType != "VOID"){
-		errorLog("Function didn't return any value " + $2->getName());
-	}
-
 	yacclogfile << "Scope #" << symbolTable.getCurrentScopeID() << " Exited" << std::endl;
 	yacclogfile << symbolTable.printAllScopeTable() << std::endl << std::endl;
 	//scope exit
@@ -508,12 +503,12 @@ compound_statement
 		std::string convertedCode = "__main_return: \n";
 		writeToAsm(convertedCode, comment, true);
 
-		comment = "removing all variable in the function";
-		convertedCode = "MOV SP, BP\n";
+		comment = "removing all variable in the scope and storing the return value";
+		convertedCode = "MOV SP, BP\nPUSH DX\n";
 		writeToAsm(convertedCode, comment, true);
 
 		comment = "stack movement for recursive calling, [if return available then it is in DX]";
-		convertedCode = "POP BP\n";
+		convertedCode = "MOV SP, BP\nPOP BP\n";
 		writeToAsm(convertedCode, comment, true);
 
 		comment = "interrupt to return to operator";
@@ -530,12 +525,12 @@ compound_statement
 		std::string convertedCode = "__" + currentAsmFunction + "_return:\n";
 		writeToAsm(convertedCode, comment, true);
 
-		comment = "removing all variable in the function";
-		convertedCode = "MOV SP, BP\n";
+		comment = "removing all variable in the scope and storing the return value";
+		convertedCode = "MOV SP, BP\nPUSH DX\n";
 		writeToAsm(convertedCode, comment, true);
 
 		comment = "stack movement for recursive calling, [if return available then it is in DX]";
-		convertedCode = "POP BP\n";
+		convertedCode = "MOV SP, BP\nPOP BP\n";
 		writeToAsm(convertedCode, comment, true);
 
 		comment = currentFunction + " function ending";
@@ -1766,6 +1761,11 @@ factor : variable
 			compiledCode += "PUSH AX\n"; 
 		}
 		compiledCode += "CALL " + globalAvailability->getAsm() + "\n";
+		compiledCode += "MOV BX, " + std::to_string(args.size() * 2 + 6) + "\n";
+		compiledCode += "MOV AX, SP\n";
+		compiledCode += "SUB AX, BX\n";
+		compiledCode += "MOV SI, AX\n";
+		compiledCode += "MOV DX, [SI]\n"; 
 		compiledCode += "ADD SP, " + std::to_string(2 * tempOffset + 2) + "\n"; //remove that offset for regular continuation
 		std::string asmCode = newTemp();
 
@@ -1814,14 +1814,18 @@ factor : variable
 	//done
 	std::string returnType("VOID");
 	std::string codeText($1->getName() + "++");
+	std::string asmCode;
 	if($1->getType() == "VOID"){
 		errorLog("Invalid operation.");
 	}else{
 		returnType = $1->getType();
 
 		//asm code
+		asmCode = newTemp();
 		std::string comment = codeText;
-		std::string compiledCode = "INC " + $1->getAsm() + "\n";
+		std::string compiledCode = "MOV AX, " + $1->getAsm() + "\n";  
+		compiledCode += "MOV " + asmCode + ", AX\n";
+		compiledCode += "INC " + $1->getAsm() + "\n";
 
 		if($1->hasAddress()){ //if this is an array, also increase the data on the real address too
 			compiledCode += "MOV SI, " + $1->getAddress() + "\n";
@@ -1833,32 +1837,36 @@ factor : variable
 
 	}
 	logCode(codeText, "factor : variable INCOP");
-	$$ = new SymbolInfo(codeText, returnType, $1->getAsm());
+	$$ = new SymbolInfo(codeText, returnType, asmCode);
 }
 | variable DECOP 
 {
 	//done
 	std::string returnType("VOID");
 	std::string codeText($1->getName() + "--");
+	std::string asmCode;
 	if($1->getType() == "VOID"){
 		errorLog("Invalid operation.");
 	}else{
 		returnType = $1->getType();
 
 		//asm code
+		asmCode = newTemp();
 		std::string comment = codeText;
-		std::string compiledCode = "DEC " + $1->getAsm() + "\n";
+		std::string compiledCode = "MOV AX, " + $1->getAsm() + "\n";  
+		compiledCode += "MOV " + asmCode + ", AX\n";
+		compiledCode += "DEC " + $1->getAsm() + "\n";
 
 		if($1->hasAddress()){ //if this is an array, also increase the data on the real address too
 			compiledCode += "MOV SI, " + $1->getAddress() + "\n";
 			compiledCode += "MOV AX, " + $1->getAsm() + "\n";
-			compiledCode += "MOV [SI], AX\n";  
+			compiledCode += "MOV [SI], AX\n"; 
 		}
 
 		writeToAsm(compiledCode, comment, true);
 	}
 	logCode(codeText, "factor : variable DECOP");
-	$$ = new SymbolInfo(codeText, returnType, $1->getAsm());
+	$$ = new SymbolInfo(codeText, returnType, asmCode);
 };
 
 argument_list :	arguments 
@@ -1909,16 +1917,18 @@ int main(int argc,char *argv[])
 		exit(1);
 	}
 
-    lexlogfile.open("1805055_lex_log.txt");
-    lextokenfile.open("1805055_lex_token.txt");
+    lexlogfile.open("logs/1805055_lex_log.txt");
+    lextokenfile.open("logs/1805055_lex_token.txt");
 
-    yacclogfile.open("1805055_yacc_log.txt");
-    errorFile.open("1805055_yacc_error.txt");
+    yacclogfile.open("logs/1805055_yacc_log.txt");
+    errorFile.open("logs/1805055_yacc_error.txt");
 
-	asmFile.open("1805055_asm_code.asm");
-	initAsmCode();
+	asmFile.open("generatedCode/1805055_asm_code.asm");
+	optimizedAsmFile.open("generatedCode/1805055_optimized_asm_code.asm");
+	debugFile.open("generatedCode/debug_buffer.txt");
+	initAsmCode(1000);
 
-	formattedCode.open("1805055_formatted_code.txt");
+	formattedCode.open("logs/1805055_formatted_code.txt");
 
     yyin = inputFile;
     yyparse();

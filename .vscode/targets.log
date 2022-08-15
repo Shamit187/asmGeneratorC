@@ -8,7 +8,7 @@ make: *** No rule to make target 'all'.  Stop.
 # This is free software: you are free to change and redistribute it.
 # There is NO WARRANTY, to the extent permitted by law.
 
-# Make data base, printed on Mon Aug 15 16:05:08 2022
+# Make data base, printed on Mon Aug 15 19:53:05 2022
 
 # Variables
 
@@ -59,7 +59,7 @@ VSCODE_CODE_CACHE_PATH = /home/shamit/.config/Code/CachedData/6d9b74a70ca9c7733b
 # environment
 LANG = C
 # environment
-XAUTHORITY = /run/user/1000/.mutter-Xwaylandauth.8BPRQ1
+XAUTHORITY = /run/user/1000/.mutter-Xwaylandauth.QVAPQ1
 # default
 .LOADED := 
 # default
@@ -95,13 +95,13 @@ MAKEFILE_LIST := makefile
 # automatic
 @F = $(notdir $@)
 # environment
-VSCODE_PID = 41237
+VSCODE_PID = 2698
 # environment
 XDG_SESSION_TYPE = wayland
 # automatic
 ?D = $(patsubst %/,%,$(dir $?))
 # environment
-SESSION_MANAGER = local/shamit-ZenBook-UX425EA-UX425EA:@/tmp/.ICE-unix/2058,unix/shamit-ZenBook-UX425EA-UX425EA:/tmp/.ICE-unix/2058
+SESSION_MANAGER = local/shamit-ZenBook-UX425EA-UX425EA:@/tmp/.ICE-unix/1977,unix/shamit-ZenBook-UX425EA-UX425EA:/tmp/.ICE-unix/1977
 # automatic
 *F = $(notdir $*)
 # environment
@@ -143,7 +143,7 @@ LC_MONETARY = bn_BD
 # environment
 LC_TIME = bn_BD
 # environment
-INVOCATION_ID = 5b2c9d6f2e8c40fa849cbbfcdb3ea2e3
+INVOCATION_ID = 80a032ef599847fbb1cc52ed037465fa
 # environment
 USERNAME = shamit
 # environment
@@ -173,7 +173,7 @@ GIO_LAUNCHED_DESKTOP_FILE = /usr/share/applications/code.desktop
 # makefile
 .DEFAULT_GOAL := create
 # environment
-SYSTEMD_EXEC_PID = 2087
+SYSTEMD_EXEC_PID = 2002
 # environment
 DISPLAY = :0
 # environment
@@ -183,11 +183,11 @@ GTK_MODULES = gail:atk-bridge
 # default
 MAKE_VERSION := 4.3
 # environment
-MANAGERPID = 1887
+MANAGERPID = 1792
 # environment
 LC_MEASUREMENT = bn_BD
 # environment
-GIO_LAUNCHED_DESKTOP_FILE_PID = 41237
+GIO_LAUNCHED_DESKTOP_FILE_PID = 2698
 # environment
 _ = /usr/share/code/code
 # environment
@@ -197,7 +197,7 @@ XDG_RUNTIME_DIR = /run/user/1000
 # environment
 NVM_CD_FLAGS = 
 # environment
-JOURNAL_STREAM = 8:34446
+JOURNAL_STREAM = 8:29580
 # environment
 XDG_SESSION_CLASS = user
 # environment
@@ -235,9 +235,9 @@ LC_IDENTIFICATION = bn_BD
 
 # Directories
 
-# . (device 66307, inode 2494789): 20 files, no impossibilities.
+# . (device 66307, inode 2494789): 16 files, no impossibilities.
 
-# 20 files, no impossibilities in 1 directories.
+# 16 files, no impossibilities in 1 directories.
 
 # Implicit Rules
 
@@ -250,7 +250,7 @@ compile:
 #  Modification time never checked.
 #  File has not been updated.
 #  recipe to execute (from 'makefile', line 27):
-	@./compiler.out input.txt
+	@./compiler.out sampleInput/input.txt
 	@echo "0"
 
 # Not a target:
@@ -277,7 +277,7 @@ delete:
 # Not a target:
 makefile:
 #  Implicit rule search has been done.
-#  Last modified 2022-08-12 14:41:49.566938385
+#  Last modified 2022-08-15 19:51:48.076175425
 #  File has been updated.
 #  Successfully updated.
 
@@ -289,12 +289,12 @@ create:
 	@yacc -Wyacc -y -d -Wno-yacc -Wcounterexamples parser.y
 	@echo "6"
 	@g++ -w -c -o y.o y.tab.c
- 
 	@echo "5"
 	@flex scanner.l
 	@echo "4"
 	@g++ -w -c -o l.o lex.yy.c
 	@echo "3"
+ 
 	@g++ -w -c -o a.o ScopeTableClass/SymbolInfo.cpp
 	@g++ -w -c -o b.o ScopeTableClass/ScopeTable.cpp
 	@g++ -w -c -o c.o ScopeTableClass/SymbolTable.cpp
@@ -302,7 +302,7 @@ create:
 	@g++ -o compiler.out y.o l.o a.o b.o c.o -lfl
 	@rm *.o y.tab.c y.tab.h lex.yy.c
 	@echo "1"
-	@./compiler.out input.txt
+	@./compiler.out sampleInput/input.txt
 	@echo "0"
 
 # files hash-table stats:
@@ -313,12 +313,12 @@ create:
 
 # No general ('VPATH' variable) search path.
 
-# strcache buffers: 1 (0) / strings = 28 / storage = 335 B / avg = 11 B
-# current buf: size = 8162 B / used = 335 B / count = 28 / avg = 11 B
+# strcache buffers: 1 (0) / strings = 24 / storage = 224 B / avg = 9 B
+# current buf: size = 8162 B / used = 224 B / count = 24 / avg = 9 B
 
-# strcache performance: lookups = 35 / hit rate = 20%
+# strcache performance: lookups = 31 / hit rate = 22%
 # hash-table stats:
-# Load=28/8192=0%, Rehash=0, Collisions=0/35=0%
-# Finished Make data base on Mon Aug 15 16:05:08 2022
+# Load=24/8192=0%, Rehash=0, Collisions=0/31=0%
+# Finished Make data base on Mon Aug 15 19:53:05 2022
 
  

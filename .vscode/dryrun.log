@@ -1,4 +1,4 @@
-make --dry-run --always-make --keep-going --print-directory
+make --dry-run --keep-going --print-directory
 make: Entering directory '/home/shamit/CodeFiles/yacc_lex/asmGeneratorC'
 yacc -Wyacc -y -d -Wno-yacc -Wcounterexamples parser.y
 echo "6"
@@ -15,7 +15,7 @@ echo "2"
 g++ -o compiler.out y.o l.o a.o b.o c.o -lfl
 rm *.o y.tab.c y.tab.h lex.yy.c
 echo "1"
-./compiler.out input.txt
+./compiler.out sampleInput/input.txt
 echo "0"
 make: Leaving directory '/home/shamit/CodeFiles/yacc_lex/asmGeneratorC'
  

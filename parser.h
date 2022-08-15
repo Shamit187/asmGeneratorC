@@ -21,12 +21,17 @@ std::ofstream yacclogfile;
 std::ofstream errorFile;
 
 //asm code
+
 std::ofstream asmFile;
+std::ofstream optimizedAsmFile;
+std::ofstream debugFile;
 std::vector<int> offsetStack;
 int tempOffset = 0;
 std::string dataType;
-
+std::string currentAsmFunction;
 std::ofstream formattedCode;
+
+//
 
 extern unsigned int lineCount;
 extern unsigned int lexErrorCount;
@@ -103,39 +108,128 @@ std::string indentGen(){
     }
 }
 
-unsigned functionNumber = 0;
-std::string currentAsmFunction;
+//asm related functions
+
+//declerations
+std::string newFuncGenerator(std::string funcName);
+std::string newVarGenerator(std::string varName);
+void writeToAsm(std::string asmCode, std::string comment, bool indent);
+void initAsmCode(int stackSize);
+std::vector<std::string> splitString(std::string ls, char delim);
+std::string newLabel();
+std::string newLabel(std::string type_of_label);
+std::string getOffset(std::string asmCode);
+std::string newTemp();
+void removeTemp();
+
+
+//definitions
 std::string newFuncGenerator(std::string funcName){
+    static unsigned functionNumber = 0;
     functionNumber++;
     return funcName + std::to_string(functionNumber);
 }
 
-unsigned globalVarCounter = 0;
 std::string newVarGenerator(std::string varName){
+    static unsigned globalVarCounter = 0;
     globalVarCounter++;
     return varName + std::to_string(globalVarCounter);
 }
 
-void initAsmCode(){
-
-    std::string line;
-    std::ifstream ini_file{
-        "init.txt"
-    };
-    while (getline(ini_file, line)) {
-        asmFile << line << "\n";
-    }
-}
-
 void writeToAsm(std::string asmCode, std::string comment, bool indent){
-    asmFile << "\n    ;" << comment << std::endl;
+    static std::string prevLine = "     ";
+    static std::string moveCommand = "MOV";
+    static std::string prevMovFrom = "null";
+    static std::string prevMovTo = "null";
+
+    asmFile << "    ;" << comment << std::endl;
+
     std::string line;   
     std::stringstream asmLines(asmCode); 
     while (std::getline(asmLines, line, '\n')) {
+
+        //optimization code
+        if(!line.empty() && !prevLine.empty())
+        {
+            std::vector < std::string > current = splitString(line, ' ');
+            std::vector < std::string > prev = splitString(prevLine, ' ');
+            
+
+            //mov optimization
+            if(current[0].compare(moveCommand) == 0 && prev[0].compare(moveCommand) == 0){
+
+                std::string tempString_0{line};
+                tempString_0.erase(0,4);
+                std::vector < std::string > x = splitString(tempString_0, ',');
+                x[1].erase(0,1);
+                //debugFile << "moving from " << x[1] << " to " << x[0] << std::endl;
+
+                std::string tempString_1{prevLine};
+                tempString_1.erase(0,4);
+                std::vector < std::string > y = splitString(tempString_1, ',');
+                y[1].erase(0,1);
+                // std::vector < std::string > y;
+                // y.push_back("hello");
+                // y.push_back("or");
+
+                if(x[0] == y[1] && y[0] == x[1]){
+                    // debugFile << x[0] << " " << x[1] << " " << y[0] << " " << y[1] << std::endl;
+                    // optimizedAsmFile << prevLine << std::endl;
+                    optimizedAsmFile << ";" << line << " Optimized" << std::endl;
+                }else if(x[0] == y[0] && y[1] == x[1]){
+                    // debugFile << x[0] << " " << x[1] << " " << y[0] << " " << y[1] << std::endl;
+                    // optimizedAsmFile <<  prevLine << std::endl;
+                    optimizedAsmFile <<  ";" << line << " Optimized" << std::endl;
+                }else{
+                    optimizedAsmFile <<  prevLine << std::endl;
+                    prevLine = line;
+                }
+            }else{
+                optimizedAsmFile <<  prevLine << std::endl;
+                prevLine = line;
+            }
+        }
+
+        //normal code
         asmFile <<  (indent ? "\t":"") << line << std::endl;
     }
 
+    asmFile << std::endl << std::endl;
+}
+
+void initAsmCode(int stackSize){
+
+    std::string line;
+    
+    //model and stack size
+    asmFile << ".MODEL SMALL\n";
+    asmFile << ".STACK " + std::to_string(stackSize) + "\n";
+    asmFile << ".DATA\n\n.CODE\n";
+
+    optimizedAsmFile << ".MODEL SMALL\n";
+    optimizedAsmFile << ".STACK " + std::to_string(stackSize) + "\n";
+    optimizedAsmFile << ".DATA\n\n.CODE\n";
+
+    //print procedure
+    std::ifstream ini_file_1{
+        "asmLibrary/printProc.txt"
+    };
+    while (getline(ini_file_1, line)) {
+        asmFile << line << "\n";
+        optimizedAsmFile << line << "\n";
+    }
+
+    //indicator
+    std::ifstream ini_file_2{
+        "asmLibrary/compiledCodeIndicator.txt"
+    };
+    while (getline(ini_file_2, line)) {
+        asmFile << line << "\n";
+        optimizedAsmFile << line << "\n";
+    }
+
     asmFile << std::endl;
+
 }
 
 std::vector<std::string> splitString(std::string ls, char delim) {
