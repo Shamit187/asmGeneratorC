@@ -22,8 +22,7 @@ std::ofstream errorFile;
 
 //asm code
 std::ofstream asmFile;
-std::stack<int> offsetStack;
-int currentOffset = 0;
+std::vector<int> offsetStack;
 int tempOffset = 0;
 
 std::ofstream formattedCode;
@@ -163,13 +162,6 @@ std::string arrayOffset(std::string asmCode, int index){
     return returnString;
 }
 
-std::string newTemp(){
-    static int tempNumber = 0;
-    
-    std::string temp = "__temp" + std::to_string(tempNumber++);
-    return temp;
-}
-
 std::string newLabel(){
     static int lebelNumber = 0;
     
@@ -183,4 +175,14 @@ std::string getOffset(std::string asmCode){
     returnString.pop_back();
     // std::cout << asmCode << " : " << returnString << std::endl;
     return returnString;
+}
+
+std::string newTemp(){
+    tempOffset++;
+    std::string asmCode = "[BP - " + std::to_string((offsetStack.back() + tempOffset)*2) + "]";
+    return asmCode;
+}
+
+void removeTemp(){
+    tempOffset = 0;
 }

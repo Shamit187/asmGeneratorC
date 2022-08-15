@@ -46,7 +46,7 @@ PRINT PROC
 
     	PRINT_LOOP:
         	POP DX
-		MOV AH, 02H
+			MOV AH, 02H
         	ADD DX, 30H
         	INT 21H
         	 
