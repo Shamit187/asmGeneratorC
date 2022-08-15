@@ -648,73 +648,6 @@ compound_statement : LCURL statements RCURL
 var_declaration : type_specifier declaration_list SEMICOLON 
 {
 	//done
-	//no asm requried
-	if($1->getName() == "VOID")
-	{
-		errorLog("Variable type cannot be void");
-	}
-	else
-	{
-		std::vector<SymbolInfo> vars = $2->getParamList();
-		for(int i = 0; i < vars.size(); i++){
-			SymbolInfo* 
-			globalAvailability = symbolTable.lookGlobalScope(vars[i].getName());
-			if(	globalAvailability != nullptr && isFunction(globalAvailability->getType()) )
-			{
-				/* global function exist with same name */
-				errorLog("Variable can't have the same name as function " + vars[i].getName());
-			}else if(symbolTable.lookCurrentScope(vars[i].getName()) != nullptr){
-				errorLog("Multiple declaration of " + vars[i].getName());
-			}else
-			{	if(vars[i].getType() == "ARRAY"){
-					//asm code
-					std::string comment = "array declaration " + vars[i].getName() + " of size " + std::to_string(vars[i].getSize());
-					std::string asmCode;
-					bool local = true;
-
-					if(symbolTable.getCurrentScopeID().size() == 1){
-						//global arr
-						asmCode = newVarGenerator(vars[i].getName());
-
-						symbolTable.insert(vars[i].getName(), "ARRAY_" + $1->getName(), vars[i].getSize(), asmCode);
-						asmCode += " DW " + std::to_string(vars[i].getSize()) + " DUP(?)\n";
-						local = false;
-					}else{
-						//regular arr
-						asmCode = "[BP - " + std::to_string((offsetStack.back() + 1 )*2) + "]";
-						offsetStack.back() += vars[i].getSize();
-
-						symbolTable.insert(vars[i].getName(), "ARRAY_" + $1->getName(), vars[i].getSize(), asmCode);
-						asmCode = "SUB SP, " + std::to_string(vars[i].getSize() * 2) + "\n";
-					}
-					writeToAsm(asmCode, comment, local);
-				}
-				else{
-					//asm code forvar declaration
-					std::string comment = "var declaration " + vars[i].getName();
-					std::string asmCode;
-					bool local = true;
-
-					if(symbolTable.getCurrentScopeID().size() == 1){ 
-						//global vars
-						asmCode = newVarGenerator(vars[i].getName());
-
-						symbolTable.insert(vars[i].getName(), "ID_" + $1->getName(), asmCode);
-						asmCode += " DW ?\n";
-						local = false;
-					}else{ 
-						//regular vars
-						offsetStack.back()++;
-						asmCode = "[BP - " + std::to_string(offsetStack.back()*2) + "]";
-
-						symbolTable.insert(vars[i].getName(), "ID_" + $1->getName(), asmCode);
-						asmCode = "SUB SP, 2\n";
-					}
-					writeToAsm(asmCode, comment, local);
-				}
-			}
-		}
-	}
 
 	if($1->getName() == "INT") $1->setName("int");
 	if($1->getName() == "FLOAT") $1->setName("float");
@@ -730,6 +663,7 @@ type_specifier : INT
 	//no asm required
 	logCode("int","type_specifier : INT");
 	$$ = new SymbolInfo("INT", "");
+	dataType = "INT";
 }
 | FLOAT 
 {
@@ -737,6 +671,7 @@ type_specifier : INT
 	//no asm required
 	logCode("float","type_specifier : FLOAT");
 	$$ = new SymbolInfo("FLOAT", "");
+	dataType = "FLOAT";
 }
 | VOID 
 {
@@ -744,36 +679,111 @@ type_specifier : INT
 	//no asm required
 	logCode("void","type_specifier : VOID");
 	$$ = new SymbolInfo("VOID", "");
+	dataType = "VOID";
 };
 
 declaration_list : declaration_list COMMA ID 
 {
 	//done
-	//no asm required
 	$1->pushParam(SymbolInfo($3->getName(), "ID"));
-	std::string codeText($1->getName()
-						+ "," 
-						+$3->getName());
+	std::string codeText($1->getName()+ "," +$3->getName());
 
 	logCode(codeText, "declaration_list : declaration_list COMMA ID");
 	$1->setName(codeText);
 	$$ = $1;
+
+	if(dataType == "VOID")
+	{
+		errorLog("Variable type cannot be void");
+	}
+	else
+	{
+		SymbolInfo* globalAvailability = symbolTable.lookGlobalScope($3->getName());
+		if(	globalAvailability != nullptr && isFunction(globalAvailability->getType()) )
+		{
+			/* global function exist with same name */
+			errorLog("Variable can't have the same name as function " + $3->getName());
+		}else if(symbolTable.lookCurrentScope($3->getName()) != nullptr){
+			errorLog("Multiple declaration of " + $3->getName());
+		}else
+		{	
+			//asm code for var declaration
+			std::string comment = "var declaration " + $3->getName();
+			std::string asmCode;
+			bool local = true;
+
+			if(symbolTable.getCurrentScopeID().size() == 1){ 
+				//global vars
+				asmCode = newVarGenerator($3->getName());
+
+				symbolTable.insert($3->getName(), "ID_" + dataType , asmCode);
+				asmCode += " DW ?\n";
+				local = false;
+			}else{ 
+				//regular vars
+				offsetStack.back()++;
+				asmCode = "[BP - " + std::to_string(offsetStack.back()*2) + "]";
+
+				symbolTable.insert($3->getName(), "ID_" + dataType , asmCode);
+				asmCode = "SUB SP, 2\n";
+			}
+			writeToAsm(asmCode, comment, local);
+		}
+	}
 }
 | declaration_list COMMA ID LTHIRD CONST_INT RTHIRD 
 {
 	//done
-	//no asm required
-	std::string codeText($1->getName()
-						+","
-						+$3->getName()
-						+"["
-						+$5->getName()
-						+"]");
+	std::string codeText($1->getName()+","+$3->getName()+"["+$5->getName()+"]");
 	$1->pushParam(SymbolInfo($3->getName(), "ARRAY", std::stoi($5->getName()), ""));
 
 	$1->setName(codeText);
 	$$ = $1;
 	logCode(codeText, "declaration_list : declaration_list COMMA ID LTHIRD CONST_INT RTHIRD");
+
+	//asm code
+	if(dataType == "VOID")
+	{
+		errorLog("Variable type cannot be void");
+	}
+	else
+	{
+		SymbolInfo* globalAvailability = symbolTable.lookGlobalScope($3->getName());
+		if(	globalAvailability != nullptr && isFunction(globalAvailability->getType()) )
+		{
+			/* global function exist with same name */
+			errorLog("Variable can't have the same name as function " + $3->getName());
+		}else if(symbolTable.lookCurrentScope($3->getName()) != nullptr){
+			errorLog("Multiple declaration of " + $3->getName());
+		}else
+		{
+			std::string comment = "array declaration " + $3->getName() + " of size " + $5->getName();
+			std::string asmCode;
+			bool local = true;
+
+			if(symbolTable.getCurrentScopeID().size() == 1){
+				//global arr
+
+				asmCode = newVarGenerator($3->getName());
+
+				symbolTable.insert($3->getName(), "ARRAY_" + dataType , std::stoi($5->getName()), asmCode);
+				asmCode += " DW " + $5->getName() + " DUP(?)\n";
+				local = false;
+			}else{
+				//regular arr
+
+				asmCode = "[BP - " + std::to_string((offsetStack.back() + 1 )*2) + "]";
+				offsetStack.back() += std::stoi($5->getName());
+
+				symbolTable.insert($3->getName(), "ARRAY_" + dataType , std::stoi($5->getName()), asmCode);
+				asmCode = "SUB SP, " + std::to_string(std::stoi($5->getName()) * 2) + "\n";
+			}
+			writeToAsm(asmCode, comment, local);
+			
+		}
+	}
+
+
 }
 | declaration_list COMMA ID LTHIRD CONST_FLOAT RTHIRD 
 {
@@ -797,24 +807,104 @@ declaration_list : declaration_list COMMA ID
 | ID 
 {
 	//done
-	//no asm required
 	std::vector<SymbolInfo> paramList;
 	std::string codeText($1->getName());
 
 	paramList.push_back(SymbolInfo($1->getName(), "ID"));
 	logCode(codeText, "declaration_list : ID");
 	$$ = new SymbolInfo(codeText, "", paramList, "");
+
+	//asm code
+	if(dataType == "VOID")
+	{
+		errorLog("Variable type cannot be void");
+	}
+	else
+	{
+		SymbolInfo* globalAvailability = symbolTable.lookGlobalScope($1->getName());
+		if(	globalAvailability != nullptr && isFunction(globalAvailability->getType()) )
+		{
+			/* global function exist with same name */
+			errorLog("Variable can't have the same name as function " + $1->getName());
+		}else if(symbolTable.lookCurrentScope($1->getName()) != nullptr){
+			errorLog("Multiple declaration of " + $1->getName());
+		}else
+		{	
+			//asm code for var declaration
+			std::string comment = "var declaration " + $1->getName();
+			std::string asmCode;
+			bool local = true;
+
+			if(symbolTable.getCurrentScopeID().size() == 1){ 
+				//global vars
+				asmCode = newVarGenerator($1->getName());
+
+				symbolTable.insert($1->getName(), "ID_" + dataType , asmCode);
+				asmCode += " DW ?\n";
+				local = false;
+			}else{ 
+				//regular vars
+				offsetStack.back()++;
+				asmCode = "[BP - " + std::to_string(offsetStack.back()*2) + "]";
+
+				symbolTable.insert($1->getName(), "ID_" + dataType , asmCode);
+				asmCode = "SUB SP, 2\n";
+			}
+			writeToAsm(asmCode, comment, local);
+		}
+	}
 }
 | ID LTHIRD CONST_INT RTHIRD 
 {
 	//done
-	//no asm required
 	std::vector<SymbolInfo> paramList;
 	std::string codeText($1->getName()+"["+$3->getName()+"]");
 	paramList.push_back(SymbolInfo($1->getName(), "ARRAY", std::stoi($3->getName()), " "));
 
 	logCode(codeText, "eclaration_list : ID LTHIRD CONST_INT RTHIRD");
 	$$ = new SymbolInfo(codeText, "", paramList, "");
+
+	//asm code
+	if(dataType == "VOID")
+	{
+		errorLog("Variable type cannot be void");
+	}
+	else
+	{
+		SymbolInfo* globalAvailability = symbolTable.lookGlobalScope($1->getName());
+		if(	globalAvailability != nullptr && isFunction(globalAvailability->getType()) )
+		{
+			/* global function exist with same name */
+			errorLog("Variable can't have the same name as function " + $1->getName());
+		}else if(symbolTable.lookCurrentScope($1->getName()) != nullptr){
+			errorLog("Multiple declaration of " + $1->getName());
+		}else
+		{
+			std::string comment = "array declaration " + $1->getName() + " of size " + $3->getName();
+			std::string asmCode;
+			bool local = true;
+
+			if(symbolTable.getCurrentScopeID().size() == 1){
+				//global arr
+
+				asmCode = newVarGenerator($1->getName());
+
+				symbolTable.insert($1->getName(), "ARRAY_" + dataType , std::stoi($3->getName()), asmCode);
+				asmCode += " DW " + $3->getName() + " DUP(?)\n";
+				local = false;
+			}else{
+				//regular arr
+
+				asmCode = "[BP - " + std::to_string((offsetStack.back() + 1 )*2) + "]";
+				offsetStack.back() += std::stoi($3->getName());
+
+				symbolTable.insert($1->getName(), "ARRAY_" + dataType , std::stoi($3->getName()), asmCode);
+				asmCode = "SUB SP, " + std::to_string(std::stoi($3->getName()) * 2) + "\n";
+			}
+			writeToAsm(asmCode, comment, local);
+			
+		}
+	}
 }
 | ID LTHIRD CONST_FLOAT RTHIRD
 {
@@ -1045,15 +1135,15 @@ statement
 {
 	//done
 
-	std::string codeText("printf("
-						+$3->getName()
-						+");\n");
+	std::string codeText("printf("+$3->getName()+");\n");
 	logCode(codeText, "statements : PRINTLN LPAREN ID RPAREN SEMICOLON");
 	$$ = new SymbolInfo(codeText, "");
 
 	//asm code for printing
 	std::string comment = "printf(" + $3->getName() + ")";
-	std::string asmCode = "MOV AX, " + $3->getAsm() + "\nCALL PRINT\n";
+	std::string asmCode = "SUB SP, " + std::to_string((tempOffset + 1) * 2) + "\n";
+	asmCode += "MOV AX, " + $3->getAsm() + "\nCALL PRINT\n";
+	asmCode += "ADD SP, " + std::to_string((tempOffset + 1) * 2) + "\n";
 	writeToAsm(asmCode, comment, true);
 }
 | RETURN expression SEMICOLON 
@@ -1188,26 +1278,46 @@ variable : ID
 				returnType = typeReturn(closestScopeSymbol->getType());
 
 				//asm code
-				std::string comment = "array[expression].. i hate this code..";
+				std::string comment = "array[expression]";
 
-				std::string compiledCode = "MOV AX, " + $3->getAsm() + "\n";
-				compiledCode += "MOV BX, BP\n";
-				compiledCode += "SUB BX, " + getOffset(closestScopeSymbol->getAsm()) + "\n";
-				compiledCode += "SHL AX, 1\n";
-				compiledCode += "SUB BX, AX\n";
-				
-				asmCode = newTemp();
+				//two path.. global or local var
 
-				//symbolTable.insert(newTemp(), "ID_INT", asmCode);
-				compiledCode += "MOV AX, [BX]\n";
-				compiledCode += "MOV " + asmCode + ", AX\n";
+				if((closestScopeSymbol->getAsm()).at(0) == '['){ //local var
+					std::string compiledCode = "MOV AX, " + $3->getAsm() + "\n";
+					compiledCode += "MOV BX, BP\n";
+					compiledCode += "SUB BX, " + getOffset(closestScopeSymbol->getAsm()) + "\n";
+					compiledCode += "SHL AX, 1\n";
+					compiledCode += "SUB BX, AX\n";
+					
+					asmCode = newTemp();
 
-				address = newTemp();
+					//symbolTable.insert(newTemp(), "ID_INT", asmCode);
+					compiledCode += "MOV AX, [BX]\n";
+					compiledCode += "MOV " + asmCode + ", AX\n";
 
-				//symbolTable.insert(newTemp(), "ID_INT", asmCode);
-				compiledCode += "MOV " + asmCode + " , BX\n";
+					address = newTemp();
 
-				writeToAsm(compiledCode, comment, true);
+					//symbolTable.insert(newTemp(), "ID_INT", asmCode);
+					compiledCode += "MOV " + address + " , BX\n";
+
+					writeToAsm(compiledCode, comment, true);
+				}else{ //global
+					std::string compiledCode = "MOV SI, " + closestScopeSymbol->getAsm() + "\n";
+					compiledCode += "MOV AX, " + $3->getAsm() + "\n";
+					compiledCode += "SHL AX, 1\n";
+					compiledCode += "ADD SI, AX\n";
+					compiledCode += "MOV AX, [SI]\n";
+
+					asmCode = newTemp();
+
+					compiledCode += "MOV " + asmCode + ", AX\n";
+
+					address = newTemp();
+
+					//symbolTable.insert(newTemp(), "ID_INT", asmCode);
+					compiledCode += "MOV " + address + ", SI\n";
+					writeToAsm(compiledCode, comment, true);
+				}
 			}
 		}
 	}
@@ -1253,7 +1363,7 @@ expression : logic_expression
 		std::string compiledCode = "MOV AX, " + $3->getAsm() + "\n";
 
 		if($1->hasAddress()){
-			compiledCode += "MOV " + $1->getAddress() + ", BX\n";
+			compiledCode += "MOV BX, " + $1->getAddress() + "\n";
 			compiledCode += "MOV [BX], AX\n";
 		}else{
 			compiledCode += "MOV " + $1->getAsm() + ", AX\n";

@@ -24,6 +24,7 @@ std::ofstream errorFile;
 std::ofstream asmFile;
 std::vector<int> offsetStack;
 int tempOffset = 0;
+std::string dataType;
 
 std::ofstream formattedCode;
 
