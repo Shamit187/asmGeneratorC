@@ -1,3 +1,4 @@
+i = sampleInput/input.txt
 create:
 	@yacc -Wyacc -y -d -Wno-yacc -Wcounterexamples parser.y
 	@echo "6"

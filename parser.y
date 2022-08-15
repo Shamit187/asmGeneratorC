@@ -1947,5 +1947,14 @@ int main(int argc,char *argv[])
 	asmFile.close();
 	formattedCode.close();
 
+	if(lexErrorCount > 0 || yaccErrorCount > 0){
+		std::ofstream ofs;
+		ofs.open("generatedCode/1805055_optimized_asm_code.asm", std::ofstream::out | std::ofstream::trunc);
+		ofs.close();
+
+		ofs.open("generatedCode/1805055_asm_code.asm", std::ofstream::out | std::ofstream::trunc);
+		ofs << ";code contains error" << std::endl;
+		ofs.close();
+	}
     return 0;    
 }
