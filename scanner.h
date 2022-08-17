@@ -368,7 +368,7 @@ void insertEscStringBuffer(string input){
     }
 }
 
-void flushStringBuffer(unsigned int choice){
+std::string flushStringBuffer(unsigned int choice){
     switch (choice)
     {
     case STRING_TYPE:
@@ -390,6 +390,8 @@ void flushStringBuffer(unsigned int choice){
     default:
         break;
     }
+    std::string returnString {stringLexemeBuffer};
     stringBuffer.clear();
     stringLexemeBuffer.clear();
+    return returnString;
 }

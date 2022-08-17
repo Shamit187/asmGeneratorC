@@ -30,6 +30,7 @@ int tempOffset = 0;
 std::string dataType;
 std::string currentAsmFunction;
 std::ofstream formattedCode;
+std::ofstream dataPortion;
 
 //
 
@@ -121,9 +122,75 @@ std::string newLabel(std::string type_of_label);
 std::string getOffset(std::string asmCode);
 std::string newTemp();
 void removeTemp();
+void writeToData(std::string asmCode);
+void createAsmFile();
 
 
 //definitions
+void createAsmFile(int stackSize){
+    std::ofstream normal{"generatedCode/asmCode.asm"};
+    std::ofstream optimized{"generatedCode/optimizedAsmCode.asm"};
+    std::string line;
+    std::ifstream input;
+
+    normal << ".MODEL SMALL\n.STACK " + std::to_string(stackSize) + "\n\n.DATA\n";
+    optimized << ".MODEL SMALL\n.STACK " + std::to_string(stackSize) + "\n\n.DATA\n";
+
+    //writeData
+    input.open("asmLibrary/data.txt", std::ifstream::in);
+    while (getline(input, line)) {
+        normal << line << "\n";
+        optimized << line << "\n";
+    }
+    input.close();
+
+    normal << "\n.CODE\n\n";
+    optimized << "\n.CODE\n\n";
+
+    //writePrintProc
+    input.open("asmLibrary/printProc.txt", std::ifstream::in);
+    while (getline(input, line)) {
+        normal << line << "\n";
+        optimized << line << "\n";
+    }
+    input.close();
+
+    //writeInputProc
+    input.open("asmLibrary/inputProc.txt", std::ifstream::in);
+    while (getline(input, line)) {
+        normal << line << "\n";
+        optimized << line << "\n";
+    }
+    input.close();
+
+    //compiledIndication
+    input.open("asmLibrary/compiledCodeIndicator.txt", std::ifstream::in);
+    while (getline(input, line)) {
+        normal << line << "\n";
+        optimized << line << "\n";
+    }
+    input.close();
+
+
+    //normal
+    input.open("asmLibrary/compiledCode.txt", std::ifstream::in);
+    while (getline(input, line)) {
+        normal << line << "\n";
+    }
+    input.close();
+
+
+    //optimized
+    input.open("asmLibrary/optimizedCode.txt", std::ifstream::in);
+    while (getline(input, line)) {
+        optimized << line << "\n";
+    }
+    input.close();
+
+    normal.close();
+    optimized.close();
+}
+
 std::string newFuncGenerator(std::string funcName){
     static unsigned functionNumber = 0;
     functionNumber++;
@@ -134,6 +201,10 @@ std::string newVarGenerator(std::string varName){
     static unsigned globalVarCounter = 0;
     globalVarCounter++;
     return varName + std::to_string(globalVarCounter);
+}
+
+void writeToData(std::string asmCode){
+    dataPortion << asmCode;
 }
 
 void writeToAsm(std::string asmCode, std::string comment, bool indent){

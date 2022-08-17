@@ -20,6 +20,7 @@
     #include "y.tab.h"
 
     #define YYSTYPE SymbolInfo*
+    std::string stringToken;
 %}
 
 LETTER [a-zA-Z]
@@ -102,6 +103,7 @@ EXPFLOAT {INTFLOAT}{EXPONENT}
 "while" {keywordTokenizer(yytext);yylval.symbolInfo = (YYSTYPE) new SymbolInfo(yytext, "WHILE");return WHILE;}
 "return" {keywordTokenizer(yytext);return RETURN;}
 "println" {keywordTokenizer(yytext);return PRINTLN;}
+"input" {keywordTokenizer(yytext);return INPUT;}
 
 {LETTER_}({LETTER_}|{DIGIT})* {identifierTokenizer(yytext);yylval.symbolInfo = (YYSTYPE) new SymbolInfo(yytext, "ID");return ID;}
 
@@ -141,7 +143,7 @@ EXPFLOAT {INTFLOAT}{EXPONENT}
 <STRING_START>[^\\\n\"]* {insertStringBuffer(yytext);}
 <STRING_START>[\\] {BEGIN (STRING_ESCAPE);}
 <STRING_START>{VERTGAP} {BEGIN (INITIAL);lineCount++;flushStringBuffer(UNTERMINATED_STRING);}
-<STRING_START>{DUOQUO} {BEGIN (INITIAL);flushStringBuffer(STRING_TYPE);}
+<STRING_START>{DUOQUO} {BEGIN (INITIAL);stringToken = flushStringBuffer(STRING_TYPE);yylval.symbolInfo = (YYSTYPE) new SymbolInfo(stringToken, "STRING"); return STRING;}
 <STRING_START><<EOF>> {BEGIN (INITIAL);lineCount++;flushStringBuffer(UNTERMINATED_STRING);}
 
 <STRING_ESCAPE>{ESCCHAR} {BEGIN (STRING_START);insertEscStringBuffer(yytext);}

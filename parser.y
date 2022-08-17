@@ -10,6 +10,8 @@
 
 %token RETURN VOID FLOAT INT IF ELSE INCOP DECOP ASSIGNOP NOT LPAREN RPAREN LCURL RCURL LTHIRD RTHIRD COMMA SEMICOLON PRINTLN UNRECOGNIZED
 %token <symbolInfo> WHILE FOR
+%token <symbolInfo> STRING
+%token INPUT
 
 %token <symbolInfo> ID CONST_INT CONST_FLOAT ADDOP MULOP RELOP LOGICOP
 
@@ -713,6 +715,7 @@ declaration_list : declaration_list COMMA ID
 
 				symbolTable.insert($3->getName(), "ID_" + dataType , asmCode);
 				asmCode += " DW ?\n";
+				writeToData(asmCode);
 				local = false;
 			}else{ 
 				//regular vars
@@ -721,8 +724,9 @@ declaration_list : declaration_list COMMA ID
 
 				symbolTable.insert($3->getName(), "ID_" + dataType , asmCode);
 				asmCode = "SUB SP, 2\n";
+				writeToAsm(asmCode, comment, local);
 			}
-			writeToAsm(asmCode, comment, local);
+			
 		}
 	}
 }
@@ -764,6 +768,7 @@ declaration_list : declaration_list COMMA ID
 				symbolTable.insert($3->getName(), "ARRAY_" + dataType , std::stoi($5->getName()), asmCode);
 				asmCode += " DW " + $5->getName() + " DUP(?)\n";
 				local = false;
+				writeToData(asmCode);
 			}else{
 				//regular arr
 
@@ -772,8 +777,8 @@ declaration_list : declaration_list COMMA ID
 
 				symbolTable.insert($3->getName(), "ARRAY_" + dataType , std::stoi($5->getName()), asmCode);
 				asmCode = "SUB SP, " + std::to_string(std::stoi($5->getName()) * 2) + "\n";
+				writeToAsm(asmCode, comment, local);
 			}
-			writeToAsm(asmCode, comment, local);
 			
 		}
 	}
@@ -837,6 +842,7 @@ declaration_list : declaration_list COMMA ID
 				symbolTable.insert($1->getName(), "ID_" + dataType , asmCode);
 				asmCode += " DW ?\n";
 				local = false;
+				writeToData(asmCode);
 			}else{ 
 				//regular vars
 				offsetStack.back()++;
@@ -844,8 +850,9 @@ declaration_list : declaration_list COMMA ID
 
 				symbolTable.insert($1->getName(), "ID_" + dataType , asmCode);
 				asmCode = "SUB SP, 2\n";
+				writeToAsm(asmCode, comment, local);
 			}
-			writeToAsm(asmCode, comment, local);
+			
 		}
 	}
 }
@@ -887,6 +894,7 @@ declaration_list : declaration_list COMMA ID
 				symbolTable.insert($1->getName(), "ARRAY_" + dataType , std::stoi($3->getName()), asmCode);
 				asmCode += " DW " + $3->getName() + " DUP(?)\n";
 				local = false;
+				writeToData(asmCode);
 			}else{
 				//regular arr
 
@@ -895,8 +903,9 @@ declaration_list : declaration_list COMMA ID
 
 				symbolTable.insert($1->getName(), "ARRAY_" + dataType , std::stoi($3->getName()), asmCode);
 				asmCode = "SUB SP, " + std::to_string(std::stoi($3->getName()) * 2) + "\n";
+				writeToAsm(asmCode, comment, local);
 			}
-			writeToAsm(asmCode, comment, local);
+			
 			
 		}
 	}
@@ -1139,6 +1148,20 @@ statement
 	std::string asmCode = "SUB SP, " + std::to_string((tempOffset + 1) * 2) + "\n";
 	asmCode += "MOV AX, " + $3->getAsm() + "\nCALL PRINT\n";
 	asmCode += "ADD SP, " + std::to_string((tempOffset + 1) * 2) + "\n";
+	writeToAsm(asmCode, comment, true);
+}
+| PRINTLN LPAREN STRING RPAREN SEMICOLON
+{
+	std::string comment = "printf(" + $3->getName() + ")";
+	std::string msg = newVarGenerator("msg");
+	std::string asmCode = msg + " DB \"" + $3->getName() + "$\"\n";	
+	writeToData(asmCode);
+
+	asmCode  = "MOV DX, OFFSET " + msg + "\n";
+	asmCode += "MOV AH, 9\n";
+	asmCode += "INT 21H\n";
+	asmCode += "MOV AH, 02H\nMOV DL, CR\nINT 21H\nMOV DL, LF\nINT 21H\n";
+
 	writeToAsm(asmCode, comment, true);
 }
 | RETURN expression SEMICOLON 
@@ -1796,7 +1819,12 @@ factor : variable
 	std::string asmCode = newTemp();
 
 	//symbolTable.insert(newTemp(), "ID_INT", asmCode);
-	std::string compiledCode = "MOV AX, " + $1->getName() + "\n";
+	std::string compiledCode;
+	if(std::stoi($1->getName()) == 0){
+		compiledCode = "XOR AX, AX\n";
+	}else{
+		compiledCode = "MOV AX, " + $1->getName() + "\n";
+	}
 	compiledCode += "MOV " + asmCode + ", AX\n";
 	writeToAsm(compiledCode, "CONST_INT: " + $1->getName(), true);
 
@@ -1867,7 +1895,18 @@ factor : variable
 	}
 	logCode(codeText, "factor : variable DECOP");
 	$$ = new SymbolInfo(codeText, returnType, asmCode);
-};
+}
+| INPUT LPAREN RPAREN
+{
+	std::string comment = "input procedure";
+	std::string compiledCode = "CALL INPUT\n";
+	std::string asmCode = newTemp();
+	compiledCode += "MOV " + asmCode + ", BX\n";
+
+	writeToAsm(compiledCode, comment, true);
+	$$ = new SymbolInfo("INPUT()", "INT", asmCode);
+}
+;
 
 argument_list :	arguments 
 {
@@ -1923,10 +1962,10 @@ int main(int argc,char *argv[])
     yacclogfile.open("logs/1805055_yacc_log.txt");
     errorFile.open("logs/1805055_yacc_error.txt");
 
-	asmFile.open("generatedCode/1805055_asm_code.asm");
-	optimizedAsmFile.open("generatedCode/1805055_optimized_asm_code.asm");
+	asmFile.open("asmLibrary/compiledCode.txt");
+	optimizedAsmFile.open("asmLibrary/optimizedCode.txt");
 	debugFile.open("generatedCode/debug_buffer.txt");
-	initAsmCode(1000);
+	dataPortion.open("asmLibrary/data.txt");
 
 	formattedCode.open("logs/1805055_formatted_code.txt");
 
@@ -1946,15 +1985,19 @@ int main(int argc,char *argv[])
 	errorFile.close();
 	asmFile.close();
 	formattedCode.close();
+	dataPortion.close();
 
 	if(lexErrorCount > 0 || yaccErrorCount > 0){
 		std::ofstream ofs;
-		ofs.open("generatedCode/1805055_optimized_asm_code.asm", std::ofstream::out | std::ofstream::trunc);
+		ofs.open("asmLibrary/compiledCode.asm", std::ofstream::out | std::ofstream::trunc);
 		ofs.close();
 
-		ofs.open("generatedCode/1805055_asm_code.asm", std::ofstream::out | std::ofstream::trunc);
+		ofs.open("asmLibrary/optimizedCode.asm", std::ofstream::out | std::ofstream::trunc);
 		ofs << ";code contains error" << std::endl;
 		ofs.close();
 	}
+
+	createAsmFile(1000);
+
     return 0;    
 }
