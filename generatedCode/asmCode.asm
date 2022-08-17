@@ -1,3 +1,128 @@
+.MODEL SMALL
+.STACK 1000
+
+.DATA
+x1 DW 100 DUP(?)
+
+.CODE
+
+CR EQU 0DH
+LF EQU 0AH
+NG EQU 2DH
+
+PRINT PROC          
+     	
+    XOR CX, CX
+    XOR DX, DX
+		;fast init
+    	;print value is in ax 
+    	
+	CMP AX, 0
+	JE PRINT_ZERO
+	JNL PUSH_NUMBER_LOOP
+	
+	PUSH AX
+	MOV AH, 02H
+	MOV DL, '-'
+	INT 21H
+	POP AX
+	NEG AX
+		;print '-' if negative value
+	XOR DX,DX
+		;fix dx value to 0
+	
+    	PUSH_NUMBER_LOOP:
+
+        	CMP AX, 0
+        	JE PRINT_LOOP  
+         
+        	MOV BX, 10
+			;divide by 10  
+         
+        	DIV BX
+        	PUSH DX
+		INC CX
+			;mod in stack            
+                     
+        	XOR DX, DX
+        	JMP PUSH_NUMBER_LOOP
+
+    	PRINT_LOOP:
+        	POP DX
+			MOV AH, 02H
+        	ADD DX, 30H
+        	INT 21H
+        	 
+        	LOOP PRINT_LOOP
+	END_PRINT_LOOP:
+
+		MOV AH, 02H
+		MOV DL, CR
+		INT 21H
+		MOV DL, LF
+		INT 21H
+
+	RET
+	
+	PRINT_ZERO:
+	
+		MOV AH, 02H
+		MOV DL, '0'
+		INT 21H
+		MOV DL, CR
+		INT 21H
+		MOV DL, LF
+		INT 21H
+	
+	RET
+		
+PRINT ENDP 
+INPUT PROC
+
+    ; fast BX = 0
+    XOR BX, BX
+    
+    INPUT_LOOP:
+    ; char input 
+    MOV AH, 1
+    INT 21H
+    
+    ; if \n\r, stop taking input
+    CMP AL, CR    
+    JE END_INPUT_LOOP
+    CMP AL, LF
+    JE END_INPUT_LOOP
+    
+    ; fast char to digit
+    ; also clears AH
+    AND AX, 000FH
+    
+    ; save AX 
+    MOV CX, AX
+    
+    ; BX = BX * 10 + AX
+    MOV AX, 10
+    MUL BX
+    ADD AX, CX
+    MOV BX, AX
+    JMP INPUT_LOOP
+    
+    END_INPUT_LOOP:
+    ; value stored in BX
+    
+    ; printing CR and LF
+    MOV AH, 2
+    MOV DL, CR
+    INT 21H
+    MOV DL, LF
+    INT 21H
+
+    RET
+    
+INPUT ENDP
+;------------------------------------------------------------------------
+;------------------------Compiled Code-----------------------------------
+;------------------------------------------------------------------------
     ;main function initialization
 MAIN PROC
 

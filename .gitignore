@@ -1,8 +1,7 @@
 /logs/*.txt
-generatedCode/
 /sampleInput/*.c
 /sampleInput/allout.txt
 /input.txt
 /compiler.out
-asmLibrary/compiledCode.txt
-asmLibrary/optimizedCode.txt
+/asmLibrary/compiledCode.txt
+/asmLibrary/optimizedCode.txt
