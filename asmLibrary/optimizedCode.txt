@@ -40,11 +40,13 @@ ADD SI, AX
 MOV AX, [SI]
 MOV [BP - 6], AX
 MOV [BP - 8], SI
+SUB SP, 10
 CALL INPUT
 MOV [BP - 10], BX
+ADD SP, 10
 MOV AX, [BP - 10]
-MOV BX, [BP - 8]
-MOV [BX], AX
+MOV SI, [BP - 8]
+MOV [SI], AX
 JMP __lebel_forLoopChange_3
 __lebel_forLoopEnd_1:
 XOR AX, AX

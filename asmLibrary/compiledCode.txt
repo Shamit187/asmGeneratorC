@@ -79,14 +79,16 @@ MAIN PROC
 
 
     ;input procedure
+	SUB SP, 10
 	CALL INPUT
 	MOV [BP - 10], BX
+	ADD SP, 10
 
 
     ;x[i] = INPUT()
 	MOV AX, [BP - 10]
-	MOV BX, [BP - 8]
-	MOV [BX], AX
+	MOV SI, [BP - 8]
+	MOV [SI], AX
 
 
     ;looping statement finished

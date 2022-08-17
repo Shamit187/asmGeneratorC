@@ -1381,8 +1381,8 @@ expression : logic_expression
 		std::string compiledCode = "MOV AX, " + $3->getAsm() + "\n";
 
 		if($1->hasAddress()){
-			compiledCode += "MOV BX, " + $1->getAddress() + "\n";
-			compiledCode += "MOV [BX], AX\n";
+			compiledCode += "MOV SI, " + $1->getAddress() + "\n";
+			compiledCode += "MOV [SI], AX\n";
 		}else{
 			compiledCode += "MOV " + $1->getAsm() + ", AX\n";
 		}
@@ -1899,9 +1899,12 @@ factor : variable
 | INPUT LPAREN RPAREN
 {
 	std::string comment = "input procedure";
-	std::string compiledCode = "CALL INPUT\n";
+	std::string compiledCode = "";
 	std::string asmCode = newTemp();
+	compiledCode += "SUB SP, " + std::to_string(tempOffset*2 + 2) + "\n";
+	compiledCode += "CALL INPUT\n";
 	compiledCode += "MOV " + asmCode + ", BX\n";
+	compiledCode += "ADD SP, " + std::to_string(tempOffset*2 + 2) + "\n";
 
 	writeToAsm(compiledCode, comment, true);
 	$$ = new SymbolInfo("INPUT()", "INT", asmCode);

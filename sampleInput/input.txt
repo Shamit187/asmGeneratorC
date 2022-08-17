@@ -1,0 +1,10 @@
+int x[100];
+int main(){
+	int i;
+	for(i = 0; i < 5; i++){
+		x[i] = input();
+	}
+	for(i = 0; i < 5; i++){
+		println(x[i]);
+	}
+}
