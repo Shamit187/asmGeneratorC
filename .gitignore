@@ -5,3 +5,5 @@
 /compiler.out
 /asmLibrary/compiledCode.txt
 /asmLibrary/optimizedCode.txt
+/generatedCode/*.asm
+/generatedCode/*.txt
